@@ -1,321 +1,1230 @@
 //! User Manual and Help Documentation for FREE WOLF K8 Keyboard
+#![allow(dead_code)]
+
+#[derive(Debug, Clone, Copy)]
+pub enum ManualBlock {
+    Title(&'static str),
+    H2(&'static str),
+    Body(&'static str),
+    Bullet(&'static str),
+    Key(&'static str, &'static str),
+    TableRow(&'static str, &'static str),
+    Code(&'static str),
+    Tip(&'static str),
+}
 
 #[derive(Debug, Clone)]
 pub struct TopicInfo {
     pub id: usize,
     pub icon: &'static str,
     pub title: &'static str,
-    pub content: &'static str,
+    pub blocks: &'static [ManualBlock],
 }
 
-pub fn get_topics(lang: &str) -> Vec<TopicInfo> {
+
+impl TopicInfo {
+    pub fn plain_text(&self) -> String {
+        let mut out = String::new();
+        for b in self.blocks {
+            match b {
+                ManualBlock::Title(t) => {
+                    out.push_str("=== ");
+                    out.push_str(t);
+                    out.push_str(" ===
+
+");
+                }
+                ManualBlock::H2(h) => {
+                    out.push_str("
+");
+                    out.push_str(h);
+                    out.push_str("
+");
+                }
+                ManualBlock::Body(b) => {
+                    out.push_str(b);
+                    out.push_str("
+");
+                }
+                ManualBlock::Bullet(b) => {
+                    out.push_str("  • ");
+                    out.push_str(b);
+                    out.push_str("
+");
+                }
+                ManualBlock::Key(k, desc) => {
+                    out.push_str(&format!("  [ {:<16} ] {}
+", k, desc));
+                }
+                ManualBlock::TableRow(lbl, val) => {
+                    out.push_str(&format!("  {:<24} : {}
+", lbl, val));
+                }
+                ManualBlock::Code(c) => {
+                    out.push_str(&format!("    {}
+", c));
+                }
+                ManualBlock::Tip(t) => {
+                    out.push_str(&format!("  💡 Tip: {}
+", t));
+                }
+            }
+        }
+        out
+    }
+}
+
+pub static TOPICS_EN: &[TopicInfo] = &[
+    TopicInfo {
+        id: 0,
+        icon: "📖",
+        title: "Overview & Specs",
+        blocks: &[
+            ManualBlock::Title("FREEWOLF K8 — Technical Overview & Specifications"),
+            ManualBlock::Body("The FREEWOLF K8 is a high-performance 80% (100-key) mechanical gaming keyboard featuring universal Tri-Mode connectivity (USB-C wired, 2.4 GHz wireless, and Bluetooth 5.0 with 3 device profiles). Equipped with hot-swappable mechanical switch sockets, vibrant RGB per-key backlighting, and a massive 4000 mAh rechargeable battery, it delivers seamless productivity and gaming across Linux, Windows, and macOS."),
+            ManualBlock::H2("Hardware Specifications"),
+            ManualBlock::TableRow("Model", "FREEWOLF K8 Tri-Mode Mechanical Keyboard"),
+            ManualBlock::TableRow("Layout", "80% Compact (100 Keys with full numeric keypad)"),
+            ManualBlock::TableRow("Dimensions", "395 mm × 142 mm × 40 mm (15.55 × 5.59 × 1.57 in)"),
+            ManualBlock::TableRow("Weight", "Approximately 850 grams"),
+            ManualBlock::TableRow("Switches", "Hot-Swappable Mechanical (Standard 3-Pin sockets, Blue Switch variant)"),
+            ManualBlock::TableRow("Keycaps", "PBT Double-Injection (textured, oil-resistant, wear-proof)"),
+            ManualBlock::TableRow("Anti-Ghosting", "Full-Key Punchless (Full N-Key Rollover / NKRO)"),
+            ManualBlock::TableRow("Battery", "4000 mAh high-capacity rechargeable lithium-ion battery"),
+            ManualBlock::TableRow("Connectivity", "Tri-Mode: USB-C Wired, 2.4 GHz Wireless, Bluetooth 5.0 (BT1, BT2, BT3)"),
+            ManualBlock::TableRow("USB Hardware ID", "VID: 0x1A2C  |  PID: 0x7C80  (Interface 1 HID)"),
+            ManualBlock::TableRow("Compatibility", "Linux, Windows 11/10/8/7, macOS, Android, iOS"),
+            ManualBlock::H2("Package Contents"),
+            ManualBlock::Bullet("FREEWOLF K8 Mechanical Gaming Keyboard"),
+            ManualBlock::Bullet("Braided USB-C to USB-A Connection & Charging Cable"),
+            ManualBlock::Bullet("2.4 GHz USB Wireless Nano-Receiver (stored in magnetic base slot)"),
+            ManualBlock::Bullet("Precision Wire Keycap Puller Tool"),
+            ManualBlock::Bullet("Metal Switch Puller Tool"),
+            ManualBlock::Bullet("Two (2) Spare 3-Pin Mechanical Switches"),
+            ManualBlock::Bullet("Official User Manual & Quick Start Documentation"),
+            ManualBlock::Tip("The keyboard base includes dual-stage ergonomic tilt kickstands and non-slip rubber pads for enhanced stability and comfortable typing angles."),
+        ],
+    },
+    TopicInfo {
+        id: 1,
+        icon: "⚡",
+        title: "Tri-Mode Connectivity",
+        blocks: &[
+            ManualBlock::Title("Tri-Mode Multi-Device Connectivity"),
+            ManualBlock::Body("The K8 keyboard allows connecting up to five devices simultaneously across three connection modes: USB-C Wired, 2.4 GHz Wireless, and Bluetooth 5.0 (3 channels)."),
+            ManualBlock::H2("1. USB-C Wired Mode"),
+            ManualBlock::Bullet("Set the hardware slider switch (on the rear/side) to 'USB' or 'Wired'."),
+            ManualBlock::Bullet("Connect the USB-C cable to the keyboard and the USB-A connector to your computer."),
+            ManualBlock::Bullet("The keyboard is recognized automatically by the Linux driver. Zero input latency; charges battery simultaneously."),
+            ManualBlock::H2("2. 2.4 GHz Ultra-Low Latency Wireless Mode"),
+            ManualBlock::Bullet("Remove the 2.4 GHz USB receiver from the dedicated magnetic slot on the keyboard underside."),
+            ManualBlock::Bullet("Plug the USB receiver into an available USB 2.0/3.0 port on your computer."),
+            ManualBlock::Bullet("Set the keyboard slider switch to '2.4G'."),
+            ManualBlock::Bullet("Connection establishes automatically. If signal is lost or to re-pair:"),
+            ManualBlock::Key("FN + R", "Hold for 3–5 seconds to initiate 2.4 GHz pairing (indicator flashes rapidly)."),
+            ManualBlock::H2("3. Bluetooth 5.0 Mode (3 Paired Devices)"),
+            ManualBlock::Bullet("Set the keyboard slider switch to 'BT'."),
+            ManualBlock::Bullet("To pair a device to one of the 3 Bluetooth memory slots:"),
+            ManualBlock::Key("FN + Q", "Long-press 3–5s for BT Channel 1 (LED flashes rapidly; pair 'FREEWOLF K8' on host)."),
+            ManualBlock::Key("FN + W", "Long-press 3–5s for BT Channel 2 (LED flashes rapidly; pair 'FREEWOLF K8' on host)."),
+            ManualBlock::Key("FN + E", "Long-press 3–5s for BT Channel 3 (LED flashes rapidly; pair 'FREEWOLF K8' on host)."),
+            ManualBlock::Bullet("To quickly switch between paired Bluetooth devices at any time:"),
+            ManualBlock::Key("FN + Q / W / E", "Short press to swap between Device 1, Device 2, or Device 3 instantly."),
+            ManualBlock::Tip("When switching between paired Bluetooth devices, the indicator flashes slowly once and stays solid upon reconnection."),
+        ],
+    },
+    TopicInfo {
+        id: 2,
+        icon: "💻",
+        title: "Windows & Mac Layout",
+        blocks: &[
+            ManualBlock::Title("Operating System Layouts & Function Shortcuts"),
+            ManualBlock::Body("The FREEWOLF K8 includes dedicated hardware layout profiles for Windows and macOS, alongside a full row of F1–F12 multimedia functions."),
+            ManualBlock::H2("OS Layout Switching"),
+            ManualBlock::Key("FN + A", "Switch to Windows Mode (Standard PC layout, Windows key active, Ctrl/Alt standard)."),
+            ManualBlock::Key("FN + S", "Switch to macOS Mode (Swaps Option and Command keys to match native Mac layout)."),
+            ManualBlock::Key("FN + Win", "Windows Key Lock / Unlock (Gaming Mode: disables Win key to prevent desktop popups)."),
+            ManualBlock::H2("F1 – F12 Multimedia Hotkeys"),
+            ManualBlock::TableRow("FN + F1", "Open Default Media Player"),
+            ManualBlock::TableRow("FN + F2", "Volume Down"),
+            ManualBlock::TableRow("FN + F3", "Volume Up"),
+            ManualBlock::TableRow("FN + F4", "Mute Audio"),
+            ManualBlock::TableRow("FN + F5", "Previous Track"),
+            ManualBlock::TableRow("FN + F6", "Next Track"),
+            ManualBlock::TableRow("FN + F7", "Play / Pause Audio & Video"),
+            ManualBlock::TableRow("FN + F8", "Stop Playback"),
+            ManualBlock::TableRow("FN + F9", "Launch Web Browser"),
+            ManualBlock::TableRow("FN + F10", "Open Email Application"),
+            ManualBlock::TableRow("FN + F11", "Open File Explorer / My Computer"),
+            ManualBlock::TableRow("FN + F12", "Open Calculator"),
+        ],
+    },
+    TopicInfo {
+        id: 3,
+        icon: "💡",
+        title: "RGB Lighting Controls",
+        blocks: &[
+            ManualBlock::Title("RGB Lighting & Hardware Shortcuts"),
+            ManualBlock::Body("The K8 keyboard features 21 distinct RGB lighting modes, including 19 dynamic animations, static illumination, and software-streamed Music Visualizer mode."),
+            ManualBlock::H2("On-Board Lighting Controls"),
+            ManualBlock::Key("FN + |", "Cycle through 19 dynamic RGB lighting effects (Steady, Breathing, Neon Stream, Wave, Ripples, Marquee, Snake, Rotating Storm, Stars, etc.)."),
+            ManualBlock::Key("FN + ↑", "Increase Backlight Brightness (5 levels: 0% / Off to 100%)."),
+            ManualBlock::Key("FN + ↓", "Decrease Backlight Brightness. Level 0 turns off all backlighting completely."),
+            ManualBlock::Key("FN + →", "Increase Animation Speed (5 dynamic speed steps)."),
+            ManualBlock::Key("FN + ←", "Decrease Animation Speed (5 dynamic speed steps)."),
+            ManualBlock::H2("Software Control in Linux"),
+            ManualBlock::Bullet("Use the 'Light' tab in this app to click any lighting mode directly, adjust brightness (0–4) and speed (0–4) with zero delay."),
+            ManualBlock::Bullet("Music Mode: Streams real-time audio FFT frequency spectrum from PulseAudio/PipeWire to keyboard LEDs."),
+            ManualBlock::Bullet("In terminal: run 'k8ctl set <id|name> --brightness <0-4> --speed <0-4>'."),
+            ManualBlock::Tip("Setting brightness to 0 turns off all LED power, extending battery life up to 35 days in wireless mode."),
+        ],
+    },
+    TopicInfo {
+        id: 4,
+        icon: "🎮",
+        title: "Gaming & Custom Keys",
+        blocks: &[
+            ManualBlock::Title("Gaming Backlight Presets & Custom Recording"),
+            ManualBlock::Body("The K8 keyboard features three factory-programmed gaming backlight profiles, plus the ability to record custom illumination maps directly to on-board memory."),
+            ManualBlock::H2("Built-In Gaming Presets"),
+            ManualBlock::Key("FN + 1!", "FPS Mode — Illuminates W, A, S, D, and the 4 Arrow navigation keys."),
+            ManualBlock::Key("FN + 2@", "LOL / MOBA Mode — Illuminates Q, W, E, R, D, F, G, V, B, Tab, Space, 1–6, and Esc."),
+            ManualBlock::Key("FN + 3#", "Office Mode — Illuminates full 26 letters (A–Z), punctuation, and Arrow keys."),
+            ManualBlock::H2("How to Record Custom Backlight Maps"),
+            ManualBlock::Bullet("Step 1: Press FN + 1!, FN + 2@, or FN + 3# to choose the preset slot you want to customize."),
+            ManualBlock::Bullet("Step 2: Press FN + ~ (Tilde) to enter recording mode. The indicator LED starts flashing rapidly."),
+            ManualBlock::Bullet("Step 3: Press any key on the keyboard to toggle its backlight LED on or off."),
+            ManualBlock::Bullet("Step 4: Press FN + ~ again to save the custom pattern into the keyboard's non-volatile EEPROM memory."),
+            ManualBlock::Tip("Custom lighting maps recorded via FN + ~ persist across power cycles and work in both wired and wireless modes without requiring software."),
+        ],
+    },
+    TopicInfo {
+        id: 5,
+        icon: "🔋",
+        title: "Battery & Power Saving",
+        blocks: &[
+            ManualBlock::Title("Battery Specifications & Power Saving"),
+            ManualBlock::Body("Powered by a high-capacity 4000 mAh rechargeable lithium-ion battery, the K8 keyboard offers class-leading wireless battery life and intelligent multi-stage power saving."),
+            ManualBlock::H2("Battery Life"),
+            ManualBlock::TableRow("Battery Capacity", "4000 mAh Lithium-Ion Rechargeable"),
+            ManualBlock::TableRow("Backlight Active", "Approximately 15 days (standard daily gaming/office use)"),
+            ManualBlock::TableRow("Backlight Off", "Up to 35 days continuous usage"),
+            ManualBlock::TableRow("Charging Time", "Approx. 4–5 hours via 5V/1A USB connection"),
+            ManualBlock::H2("Intelligent Sleep Modes"),
+            ManualBlock::Bullet("5-Minute Idle Sleep: If no keys are pressed for 5 minutes, the RGB backlight automatically turns off to conserve battery."),
+            ManualBlock::Bullet("30-Minute Deep Sleep (Hibernation): After 30 minutes of inactivity, the keyboard enters ultra-low power hibernation mode."),
+            ManualBlock::Bullet("Instant Wake-Up: Press any key twice to wake the keyboard from sleep and resume typing immediately."),
+            ManualBlock::H2("Charging & LED Indicators"),
+            ManualBlock::Bullet("Connect the provided USB-C cable to any standard computer USB port or 5V USB wall adapter."),
+            ManualBlock::Bullet("The battery indicator LED illuminates during charging and turns off when the battery reaches 100% full capacity."),
+            ManualBlock::Tip("To maximize battery longevity, avoid letting the battery sit completely drained for extended periods."),
+        ],
+    },
+    TopicInfo {
+        id: 6,
+        icon: "🔧",
+        title: "Hot-Swap & Switches",
+        blocks: &[
+            ManualBlock::Title("Hot-Swappable Switches & Care"),
+            ManualBlock::Body("The FREEWOLF K8 features universal hot-swappable PCB sockets supporting standard 3-pin mechanical switches without any soldering required."),
+            ManualBlock::H2("Switch Compatibility"),
+            ManualBlock::Bullet("Supports standard 3-pin mechanical switches (Outemu, Gateron, Cherry MX, Kailh, AKKO, etc.)."),
+            ManualBlock::Bullet("Two (2) spare switches, a wire keycap puller, and a metal switch puller are included in the package."),
+            ManualBlock::H2("Step-by-Step Switch Replacement"),
+            ManualBlock::Bullet("1. Remove Keycap: Hook the wire keycap puller under the corners of the keycap and pull straight upwards."),
+            ManualBlock::Bullet("2. Remove Switch: Place the switch puller prongs into the top and bottom latch clips of the switch housing. Squeeze gently to release latches and pull straight vertically out of the PCB socket."),
+            ManualBlock::Bullet("3. Inspect Pins: Check the two copper contact pins on the bottom of the replacement switch. Ensure both pins are 100% straight and unbent."),
+            ManualBlock::Bullet("4. Install Switch: Align the two metal pins and center post with the PCB socket holes. Press straight down firmly until the switch snaps securely into the steel plate."),
+            ManualBlock::Bullet("5. Test & Replace: Test key registration before replacing the keycap."),
+            ManualBlock::H2("Cleaning & Maintenance"),
+            ManualBlock::Bullet("Always disconnect the cable and turn off the wireless power switch before cleaning."),
+            ManualBlock::Bullet("Use compressed air or a soft brush to remove dust and debris between keycaps."),
+            ManualBlock::Bullet("Wipe keycaps with a slightly damp microfiber cloth. Never use alcohol, acetone, or harsh solvents."),
+            ManualBlock::Tip("Never force a switch into the PCB socket if you feel resistance. Remove it and verify that the copper pins are not bent."),
+        ],
+    },
+    TopicInfo {
+        id: 7,
+        icon: "🛠",
+        title: "Troubleshooting Guide",
+        blocks: &[
+            ManualBlock::Title("Troubleshooting Guide & Solutions"),
+            ManualBlock::Body("Common issues, diagnostic steps, and solutions based on official manufacturer guidance and Linux driver architecture."),
+            ManualBlock::H2("1. Keyboard not responding in Wired Mode"),
+            ManualBlock::Bullet("Check Mode Switch: Ensure the slider switch on the rear/side is set to 'USB' / 'Wired'."),
+            ManualBlock::Bullet("Cable Connection: Verify the USB-C cable is firmly seated into both the keyboard and computer."),
+            ManualBlock::Bullet("Linux Permissions: Check if the device status badge shows 'Permissions Required'. If so, run 'k8ctl setup-udev' to grant non-root access to /dev/hidraw*."),
+            ManualBlock::H2("2. 2.4 GHz Wireless not connecting"),
+            ManualBlock::Bullet("Dongle Placement: Ensure the 2.4G USB nano-receiver is plugged directly into a working USB port."),
+            ManualBlock::Bullet("Mode Switch: Set the slider switch to '2.4G'."),
+            ManualBlock::Bullet("Re-Pairing: Press and hold FN + R for 3–5 seconds until the status indicator flashes rapidly, then move the keyboard close to the USB receiver."),
+            ManualBlock::H2("3. Bluetooth connection or pairing fails"),
+            ManualBlock::Bullet("Mode Switch: Ensure the switch is set to 'BT'."),
+            ManualBlock::Bullet("Pairing Mode: Long-press FN + Q, FN + W, or FN + E for 3–5 seconds until the LED flashes rapidly. On your device, remove any existing 'FREEWOLF K8' entry and scan again."),
+            ManualBlock::Bullet("Interference: Ensure distance is within 10 meters and avoid dense physical obstructions."),
+            ManualBlock::H2("4. RGB Backlight does not turn on or is dim"),
+            ManualBlock::Bullet("Brightness Level: Press FN + ↑ multiple times to increase brightness (it may have been set to 0/off)."),
+            ManualBlock::Bullet("Cycle Modes: Press FN + | to cycle through lighting effects."),
+            ManualBlock::Bullet("Power Saving: If idle for more than 5 minutes, press any key twice to wake from sleep."),
+            ManualBlock::Bullet("Low Battery: In wireless mode, low battery automatically disables backlight. Connect USB-C to charge."),
+            ManualBlock::H2("5. Specific key does not register"),
+            ManualBlock::Bullet("Remove Keycap & Switch: Use the included pullers to extract the switch."),
+            ManualBlock::Bullet("Check Pins: Inspect the bottom copper pins. If bent, straighten carefully with tweezers or replace with one of the included spare switches."),
+            ManualBlock::Bullet("Clean Socket: Blow any dust out of the hot-swap socket before reinserting."),
+        ],
+    },
+    TopicInfo {
+        id: 8,
+        icon: "🐧",
+        title: "Linux Driver & CLI",
+        blocks: &[
+            ManualBlock::Title("Linux Native Driver & CLI Utility (k8ctl)"),
+            ManualBlock::Body("This application provides a completely native Linux driver, GUI configurator, and command-line utility for the FREEWOLF K8 keyboard, eliminating any need for Windows software or Wine."),
+            ManualBlock::H2("Hardware Architecture"),
+            ManualBlock::TableRow("USB Vendor ID", "0x1A2C"),
+            ManualBlock::TableRow("USB Product ID", "0x7C80"),
+            ManualBlock::TableRow("Control Interface", "HID Interface 1 (/dev/hidraw*) — Output EP 0x02, Input EP 0x82"),
+            ManualBlock::TableRow("Macro Subsystem", "Linux Kernel /dev/uinput virtual keyboard"),
+            ManualBlock::TableRow("Audio Capture", "PulseAudio / PipeWire monitor stream"),
+            ManualBlock::H2("Linux Permissions (k8ctl setup-udev)"),
+            ManualBlock::Body("Linux restricts direct access to hidraw and uinput device nodes by default. Run the setup command once:"),
+            ManualBlock::Code("k8ctl setup-udev"),
+            ManualBlock::Body("This installs /etc/udev/rules.d/99-freewolf-k8.rules and tags the keyboard with uaccess, allowing seamless plug-and-play without requiring sudo or root."),
+            ManualBlock::H2("Command-Line Tool (k8ctl)"),
+            ManualBlock::Body("Control your keyboard from scripts, terminal, or keybindings:"),
+            ManualBlock::Code("k8ctl status"),
+            ManualBlock::Bullet("Show device detection state, hardware node, and driver readiness."),
+            ManualBlock::Code("k8ctl list"),
+            ManualBlock::Bullet("List all 21 available lighting modes with their IDs."),
+            ManualBlock::Code("k8ctl set <id|name> [--brightness 0-4] [--speed 0-4]"),
+            ManualBlock::Bullet("Set lighting mode, brightness, and speed. Example: 'k8ctl set 2 --brightness 4 --speed 2'."),
+            ManualBlock::Code("k8ctl music [--pattern 1|2] [--delay ms]"),
+            ManualBlock::Bullet("Stream real-time audio visualizer directly from terminal."),
+            ManualBlock::Code("k8ctl macro list"),
+            ManualBlock::Bullet("List all saved macros."),
+            ManualBlock::Code("k8ctl macro play <id>"),
+            ManualBlock::Bullet("Play macro using kernel virtual keyboard device."),
+        ],
+    },
+];
+
+pub static TOPICS_PT: &[TopicInfo] = &[
+    TopicInfo {
+        id: 0,
+        icon: "📖",
+        title: "Visão Geral e Specs",
+        blocks: &[
+            ManualBlock::Title("FREEWOLF K8 — Visão Geral e Especificações Técnicas"),
+            ManualBlock::Body("O FREEWOLF K8 é um teclado mecânico gamer de alto desempenho no formato 80% (100 teclas), com conectividade Tri-Modo universal (USB-C cabeado, 2.4 GHz sem fio e Bluetooth 5.0 com 3 canais). Equipado com soquetes hot-swap mecânicos, iluminação RGB tecla a tecla e uma potente bateria recarregável de 4000 mAh, oferece máxima produtividade e jogabilidade no Linux, Windows e macOS."),
+            ManualBlock::H2("Especificações de Hardware"),
+            ManualBlock::TableRow("Modelo", "FREEWOLF K8 Tri-Mode Mechanical Keyboard"),
+            ManualBlock::TableRow("Layout", "80% Compacto (100 teclas com teclado numérico integrado)"),
+            ManualBlock::TableRow("Dimensões", "395 mm × 142 mm × 40 mm (15,55 × 5,59 × 1,57 pol)"),
+            ManualBlock::TableRow("Peso", "Aproximadamente 850 gramas"),
+            ManualBlock::TableRow("Switches", "Mecânicos Hot-Swap (Soquetes padrão 3 pinos, Blue Switch)"),
+            ManualBlock::TableRow("Keycaps", "PBT Double-Shot Injection (texturizadas, resistentes a óleo)"),
+            ManualBlock::TableRow("Anti-Ghosting", "Full-Key Rollover (NKRO / 100% anti-ghosting sem bloqueio)"),
+            ManualBlock::TableRow("Bateria", "4000 mAh recarregável de íon de lítio"),
+            ManualBlock::TableRow("Conexão", "Tri-Modo: USB-C Cabeado, 2.4 GHz Sem Fio, Bluetooth 5.0 (BT1, BT2, BT3)"),
+            ManualBlock::TableRow("Identificação USB", "VID: 0x1A2C  |  PID: 0x7C80  (Interface 1 HID)"),
+            ManualBlock::TableRow("Compatibilidade", "Linux, Windows 11/10/8/7, macOS, Android, iOS"),
+            ManualBlock::H2("Conteúdo da Embalagem"),
+            ManualBlock::Bullet("Teclado Mecânico Gamer FREEWOLF K8"),
+            ManualBlock::Bullet("Cabo Trançado USB-C para USB-A"),
+            ManualBlock::Bullet("Receptor Nano sem fio USB 2.4 GHz (armazenado na base)"),
+            ManualBlock::Bullet("Extrator de Keycaps"),
+            ManualBlock::Bullet("Extrator Metálico de Switches"),
+            ManualBlock::Bullet("Dois (2) Switches Mecânicos Sobressalentes"),
+            ManualBlock::Bullet("Manual do Usuário Oficial"),
+            ManualBlock::Tip("A base do teclado possui pés retráteis com ajuste de inclinação em dois níveis e borrachas antiderrapantes para maior conforto e estabilidade."),
+        ],
+    },
+    TopicInfo {
+        id: 1,
+        icon: "⚡",
+        title: "Conectividade Tri-Modo",
+        blocks: &[
+            ManualBlock::Title("Conectividade Tri-Modo e Multi-Dispositivos"),
+            ManualBlock::Body("O teclado K8 permite conectar até cinco dispositivos simultaneamente por meio de três modos: Cabo USB-C, Sem Fio 2.4 GHz e Bluetooth 5.0 (3 canais)."),
+            ManualBlock::H2("1. Modo Cabeado USB-C"),
+            ManualBlock::Bullet("Mova o seletor na traseira/lateral para a posição 'USB' ou 'Wired'."),
+            ManualBlock::Bullet("Conecte o cabo USB-C ao teclado e o conector USB-A ao computador."),
+            ManualBlock::Bullet("Reconhecimento instantâneo no Linux com latência zero e carregamento simultâneo."),
+            ManualBlock::H2("2. Modo Sem Fio 2.4 GHz de Baixa Latência"),
+            ManualBlock::Bullet("Retire o nano-receptor 2.4 GHz do compartimento magnético na parte inferior do teclado."),
+            ManualBlock::Bullet("Conecte o receptor a uma porta USB do computador."),
+            ManualBlock::Bullet("Mova o seletor para '2.4G'."),
+            ManualBlock::Bullet("Conexão automática. Em caso de perda de sincronismo:"),
+            ManualBlock::Key("FN + R", "Segure por 3–5 segundos para parear novamente com o receptor 2.4G."),
+            ManualBlock::H2("3. Modo Bluetooth 5.0 (3 Dispositivos)"),
+            ManualBlock::Bullet("Mova o seletor para a posição 'BT'."),
+            ManualBlock::Bullet("Para parear em um dos 3 canais de memória Bluetooth:"),
+            ManualBlock::Key("FN + Q", "Segure por 3–5s para o Canal 1 (LED pisca rápido; pareie 'FREEWOLF K8' no sistema)."),
+            ManualBlock::Key("FN + W", "Segure por 3–5s para o Canal 2 (LED pisca rápido; pareie 'FREEWOLF K8' no sistema)."),
+            ManualBlock::Key("FN + E", "Segure por 3–5s para o Canal 3 (LED pisca rápido; pareie 'FREEWOLF K8' no sistema)."),
+            ManualBlock::Bullet("Para alternar rapidamente entre os dispositivos pareados:"),
+            ManualBlock::Key("FN + Q / W / E", "Toque rápido para trocar instantaneamente entre Dispositivo 1, 2 ou 3."),
+        ],
+    },
+    TopicInfo {
+        id: 2,
+        icon: "💻",
+        title: "Modos Windows e Mac",
+        blocks: &[
+            ManualBlock::Title("Modos de Sistema Operacional e Teclas de Função"),
+            ManualBlock::Body("O teclado possui perfis de layout dedicados para Windows e macOS, além de atalhos multimídia nas teclas F1 a F12."),
+            ManualBlock::H2("Troca de Layout de Sistema"),
+            ManualBlock::Key("FN + A", "Ativar Modo Windows (Layout PC padrão, tecla Win ativa, Alt normal)."),
+            ManualBlock::Key("FN + S", "Ativar Modo macOS (Inverte Option e Command para layout nativo Mac)."),
+            ManualBlock::Key("FN + Win", "Bloquear / Desbloquear Tecla Windows (Modo Gamer evita sair do jogo acidentalmente)."),
+            ManualBlock::H2("Atalhos Multimídia F1 a F12"),
+            ManualBlock::TableRow("FN + F1", "Abrir Player de Mídia"),
+            ManualBlock::TableRow("FN + F2", "Diminuir Volume"),
+            ManualBlock::TableRow("FN + F3", "Aumentar Volume"),
+            ManualBlock::TableRow("FN + F4", "Silenciar Áudio (Mudo)"),
+            ManualBlock::TableRow("FN + F5", "Faixa Anterior"),
+            ManualBlock::TableRow("FN + F6", "Próxima Faixa"),
+            ManualBlock::TableRow("FN + F7", "Reproduzir / Pausar"),
+            ManualBlock::TableRow("FN + F8", "Parar Reprodução"),
+            ManualBlock::TableRow("FN + F9", "Abrir Navegador Web"),
+            ManualBlock::TableRow("FN + F10", "Abrir Aplicativo de E-mail"),
+            ManualBlock::TableRow("FN + F11", "Abrir Meu Computador / Gerenciador de Arquivos"),
+            ManualBlock::TableRow("FN + F12", "Abrir Calculadora"),
+        ],
+    },
+    TopicInfo {
+        id: 3,
+        icon: "💡",
+        title: "Iluminação RGB e Efeitos",
+        blocks: &[
+            ManualBlock::Title("Iluminação RGB e Atalhos de Hardware"),
+            ManualBlock::Body("O K8 possui 21 modos de iluminação, incluindo 19 efeitos dinâmicos de fábrica, modo estático e visualizador de música por software."),
+            ManualBlock::H2("Controles de Iluminação pelo Teclado"),
+            ManualBlock::Key("FN + |", "Alternar entre os 19 efeitos RGB dinâmicos."),
+            ManualBlock::Key("FN + ↑", "Aumentar Brilho dos LEDs (5 níveis: 0% / Desligado a 100%)."),
+            ManualBlock::Key("FN + ↓", "Diminuir Brilho dos LEDs. O nível 0 desliga completamente os LEDs."),
+            ManualBlock::Key("FN + →", "Aumentar Velocidade das animações RGB (5 passos)."),
+            ManualBlock::Key("FN + ←", "Diminuir Velocidade das animações RGB (5 passos)."),
+            ManualBlock::H2("Controle via Software no Linux"),
+            ManualBlock::Bullet("Na aba 'Luz' deste aplicativo, clique diretamente em qualquer efeito e ajuste brilho e velocidade em tempo real."),
+            ManualBlock::Bullet("Modo Música: Converte o áudio do PulseAudio/PipeWire em ondas de iluminação no teclado."),
+            ManualBlock::Bullet("No terminal: use 'k8ctl set <id|nome> --brightness <0-4> --speed <0-4>'."),
+        ],
+    },
+    TopicInfo {
+        id: 4,
+        icon: "🎮",
+        title: "Perfis Gamer e DIY",
+        blocks: &[
+            ManualBlock::Title("Perfis Gamer e Gravação de Iluminação"),
+            ManualBlock::Body("O teclado inclui três perfis pré-programados para jogos, além da gravação de mapa customizado diretamente na memória interna."),
+            ManualBlock::H2("Perfis Gamer Integrados"),
+            ManualBlock::Key("FN + 1!", "Modo FPS — Ilumina W, A, S, D e as 4 teclas direcionais."),
+            ManualBlock::Key("FN + 2@", "Modo LOL / MOBA — Ilumina Q, W, E, R, D, F, G, V, B, Tab, Espaço, 1–6 e Esc."),
+            ManualBlock::Key("FN + 3#", "Modo Escritório — Ilumina as 26 letras (A–Z), pontuação e setas."),
+            ManualBlock::H2("Como Gravar Iluminação Personalizada"),
+            ManualBlock::Bullet("1. Pressione FN + 1!, FN + 2@ ou FN + 3# para selecionar a posição que deseja customizar."),
+            ManualBlock::Bullet("2. Pressione FN + ~ (Til) para entrar no modo de gravação. O LED indicador começará a piscar."),
+            ManualBlock::Bullet("3. Pressione as teclas que deseja ligar ou desligar individualmente."),
+            ManualBlock::Bullet("4. Pressione FN + ~ novamente para salvar o mapa na memória EEPROM do teclado."),
+        ],
+    },
+    TopicInfo {
+        id: 5,
+        icon: "🔋",
+        title: "Bateria e Economia",
+        blocks: &[
+            ManualBlock::Title("Bateria e Economia de Energia"),
+            ManualBlock::Body("Com bateria interna de 4000 mAh, o K8 oferece autonomia prolongada e gerenciamento inteligente de energia."),
+            ManualBlock::H2("Autonomia da Bateria"),
+            ManualBlock::TableRow("Capacidade", "4000 mAh Íon de Lítio Recarregável"),
+            ManualBlock::TableRow("Com RGB Ligado", "Aprox. 15 dias de uso diário normal"),
+            ManualBlock::TableRow("Com RGB Desligado", "Até 35 dias de uso contínuo"),
+            ManualBlock::TableRow("Tempo de Carga", "Aprox. 4 a 5 horas via porta USB 5V/1A"),
+            ManualBlock::H2("Modos Inteligentes de Suspensão"),
+            ManualBlock::Bullet("Repouso de 5 Minutos: O RGB desliga automaticamente após 5 minutos de inatividade."),
+            ManualBlock::Bullet("Hibernação de 30 Minutos: O teclado entra em modo de sono profundo após 30 minutos sem toques."),
+            ManualBlock::Bullet("Como Acordar: Pressione qualquer tecla duas vezes para reativar a conexão imediatamente."),
+        ],
+    },
+    TopicInfo {
+        id: 6,
+        icon: "🔧",
+        title: "Troca de Switches",
+        blocks: &[
+            ManualBlock::Title("Troca de Switches Hot-Swap e Manutenção"),
+            ManualBlock::Body("O FREEWOLF K8 possui soquetes hot-swap universais compatíveis com switches mecânicos de 3 pinos sem solda."),
+            ManualBlock::H2("Compatibilidade de Switches"),
+            ManualBlock::Bullet("Compatível com switches padrão de 3 pinos: Outemu, Gateron, Cherry MX, Kailh, AKKO, etc."),
+            ManualBlock::Bullet("Acompanha dois switches sobressalentes, extrator de keycaps e extrator de switches."),
+            ManualBlock::H2("Passo a Passo para Substituição"),
+            ManualBlock::Bullet("1. Remover Keycap: Encaixe o extrator de keycaps e puxe verticalmente para cima."),
+            ManualBlock::Bullet("2. Remover Switch: Encaixe as garras do extrator nas travas superior e inferior do switch. Aperte suavemente e puxe reto para cima, sem entortar."),
+            ManualBlock::Bullet("3. Inspecionar Pinos: Verifique se os 2 pinos de cobre do novo switch estão perfeitamente retos."),
+            ManualBlock::Bullet("4. Inserir Switch: Alinhe os pinos com os orifícios da placa e pressione reto até ouvir o clique de encaixe."),
+            ManualBlock::Bullet("5. Testar: Teste o acionamento da tecla antes de recolocar a keycap."),
+        ],
+    },
+    TopicInfo {
+        id: 7,
+        icon: "🛠",
+        title: "Solução de Problemas",
+        blocks: &[
+            ManualBlock::Title("Guia de Solução de Problemas"),
+            ManualBlock::Body("Diagnósticos e soluções recomendadas com base nas diretrizes oficiais e arquitetura do driver Linux."),
+            ManualBlock::H2("1. Teclado não responde no modo USB"),
+            ManualBlock::Bullet("Verifique o seletor: confira se a chave traseira está em 'USB' ou 'Wired'."),
+            ManualBlock::Bullet("Conexão do cabo: certifique-se de que o cabo USB-C está bem plugado."),
+            ManualBlock::Bullet("Permissões Linux: se o badge mostrar 'Permissão Necessária', execute 'k8ctl setup-udev' para liberar o acesso a /dev/hidraw* sem sudo."),
+            ManualBlock::H2("2. Sem fio 2.4 GHz não conecta"),
+            ManualBlock::Bullet("Receptor conectado: verifique se o nano-receptor USB está em uma porta USB funcionando."),
+            ManualBlock::Bullet("Seletor: confira se a chave traseira está em '2.4G'."),
+            ManualBlock::Bullet("Sincronizar: segure FN + R por 3 a 5 segundos até o LED piscar rapidamente."),
+            ManualBlock::H2("3. Falha na conexão ou pareamento Bluetooth"),
+            ManualBlock::Bullet("Seletor em BT: certifique-se de que a chave traseira está em 'BT'."),
+            ManualBlock::Bullet("Modo Pareamento: segure FN + Q, FN + W ou FN + E por 5 segundos até o LED piscar rápido. No PC/celular, remova pareamentos antigos e busque novamente."),
+            ManualBlock::H2("4. Iluminação RGB apagada ou fraca"),
+            ManualBlock::Bullet("Ajuste o brilho: aperte FN + ↑ várias vezes para aumentar a intensidade."),
+            ManualBlock::Bullet("Alterne modos: pressione FN + | para ciclar entre os efeitos."),
+            ManualBlock::Bullet("Bateria fraca: no modo sem fio, bateria fraca desliga o LED para economizar energia. Conecte o cabo USB para recarregar."),
+            ManualBlock::H2("5. Uma tecla específica parou de funcionar"),
+            ManualBlock::Bullet("Remova a keycap e o switch com os extratores incluídos. Verifique se os pinos de contato entortaram. Desdobre com cuidado ou troque pelo switch reserva."),
+        ],
+    },
+    TopicInfo {
+        id: 8,
+        icon: "🐧",
+        title: "Driver Linux e CLI",
+        blocks: &[
+            ManualBlock::Title("Driver Nativo Linux e Ferramentas CLI (k8ctl)"),
+            ManualBlock::Body("Este projeto fornece controle nativo completo no Linux, sem necessidade de programas Windows ou Wine."),
+            ManualBlock::H2("Identificação de Hardware"),
+            ManualBlock::TableRow("USB VID", "0x1A2C"),
+            ManualBlock::TableRow("USB PID", "0x7C80"),
+            ManualBlock::TableRow("Endpoint", "HID Interface 1 (/dev/hidraw*) — EP 0x02 Saída, EP 0x82 Entrada"),
+            ManualBlock::TableRow("Macros", "Módulo de kernel Linux /dev/uinput"),
+            ManualBlock::TableRow("Visualizador de Áudio", "Fluxo monitor nativo PulseAudio / PipeWire"),
+            ManualBlock::H2("Configuração de Permissões (k8ctl setup-udev)"),
+            ManualBlock::Body("O Linux restringe o acesso direto a hidraw e uinput por padrão. Execute o comando de configuração uma única vez:"),
+            ManualBlock::Code("k8ctl setup-udev"),
+            ManualBlock::Body("O script instala a regra /etc/udev/rules.d/99-freewolf-k8.rules, liberando o dispositivo para usuários normais sem necessidade de sudo."),
+            ManualBlock::H2("Comandos da Ferramenta de Linha de Comando (k8ctl)"),
+            ManualBlock::Code("k8ctl status"),
+            ManualBlock::Bullet("Exibe status da conexão e dispositivo detectado."),
+            ManualBlock::Code("k8ctl list"),
+            ManualBlock::Bullet("Lista todos os 21 modos de iluminação com seus IDs."),
+            ManualBlock::Code("k8ctl set <id|nome> [--brightness 0-4] [--speed 0-4]"),
+            ManualBlock::Bullet("Configura modo, brilho e velocidade da iluminação via terminal."),
+            ManualBlock::Code("k8ctl music [--pattern 1|2] [--delay ms]"),
+            ManualBlock::Bullet("Inicia o visualizador de áudio em tempo real pelo terminal."),
+            ManualBlock::Code("k8ctl macro list / k8ctl macro play <id>"),
+            ManualBlock::Bullet("Gerencia e executa macros diretamente via terminal ou scripts."),
+        ],
+    },
+];
+
+pub static TOPICS_ES: &[TopicInfo] = &[
+    TopicInfo {
+        id: 0,
+        icon: "📖",
+        title: "Visión General y Specs",
+        blocks: &[
+            ManualBlock::Title("FREEWOLF K8 — Visión General y Especificaciones Técnicas"),
+            ManualBlock::Body("El FREEWOLF K8 es un teclado mecánico para gaming de alto rendimiento en formato 80% (100 teclas), con conectividad Tri-Modo universal (cable USB-C, inalámbrico 2.4 GHz y Bluetooth 5.0 con 3 perfiles). Equipado con zócalos de interruptores mecánicos intercambiables en caliente (hot-swap), retroiluminación RGB tecla por tecla y una batería recargable de 4000 mAh, ofrece máxima productividad y rendimiento para juegos en Linux, Windows y macOS."),
+            ManualBlock::H2("Especificaciones de Hardware"),
+            ManualBlock::TableRow("Modelo", "FREEWOLF K8 Tri-Mode Mechanical Keyboard"),
+            ManualBlock::TableRow("Formato", "80% Compacto (100 teclas con teclado numérico integrado)"),
+            ManualBlock::TableRow("Dimensiones", "395 mm × 142 mm × 40 mm (15,55 × 5,59 × 1,57 in)"),
+            ManualBlock::TableRow("Peso", "Aproximadamente 850 gramos"),
+            ManualBlock::TableRow("Interruptores", "Mecánicos Hot-Swap (Zócalos estándar de 3 pines, Blue Switch)"),
+            ManualBlock::TableRow("Teclas (Keycaps)", "PBT Double-Shot (texturizadas, resistentes al desgaste)"),
+            ManualBlock::TableRow("Anti-Ghosting", "Full-Key Rollover (NKRO / 100% anti-ghosting)"),
+            ManualBlock::TableRow("Batería", "4000 mAh de iones de litio recargable"),
+            ManualBlock::TableRow("Conectividad", "Tri-Modo: Cable USB-C, Inalámbrico 2.4 GHz, Bluetooth 5.0 (BT1, BT2, BT3)"),
+            ManualBlock::TableRow("ID de Hardware USB", "VID: 0x1A2C  |  PID: 0x7C80  (Interfaz 1 HID)"),
+            ManualBlock::TableRow("Compatibilidad", "Linux, Windows 11/10/8/7, macOS, Android, iOS"),
+            ManualBlock::H2("Contenido del Paquete"),
+            ManualBlock::Bullet("Teclado mecánico para gaming FREEWOLF K8"),
+            ManualBlock::Bullet("Cable trenzado de conexión y carga USB-C a USB-A"),
+            ManualBlock::Bullet("Receptor nano inalámbrico USB 2.4 GHz (guardado en la base magnética)"),
+            ManualBlock::Bullet("Extractor de teclas de alambre"),
+            ManualBlock::Bullet("Extractor metálico de interruptores (switches)"),
+            ManualBlock::Bullet("Dos (2) interruptores mecánicos de repuesto de 3 pines"),
+            ManualBlock::Bullet("Manual de usuario oficial y guía de inicio rápido"),
+            ManualBlock::Tip("La base del teclado incluye patas retráctiles con ajuste ergonómico de inclinación en dos niveles y almohadillas antideslizantes para mayor estabilidad y comodidad."),
+        ],
+    },
+    TopicInfo {
+        id: 1,
+        icon: "⚡",
+        title: "Conectividad Tri-Modo",
+        blocks: &[
+            ManualBlock::Title("Conectividad Tri-Modo y Multidispositivo"),
+            ManualBlock::Body("El teclado K8 permite conectar hasta cinco dispositivos simultáneamente mediante tres modos de conexión: Cable USB-C, Inalámbrico 2.4 GHz y Bluetooth 5.0 (3 canales)."),
+            ManualBlock::H2("1. Modo Cableado USB-C"),
+            ManualBlock::Bullet("Coloque el interruptor selector (en la parte trasera/lateral) en 'USB' o 'Wired'."),
+            ManualBlock::Bullet("Conecte el cable USB-C al teclado y el extremo USB-A al ordenador."),
+            ManualBlock::Bullet("Reconocimiento automático en Linux con latencia cero de entrada y carga simultánea de la batería."),
+            ManualBlock::H2("2. Modo Inalámbrico 2.4 GHz de Ultrabaja Latencia"),
+            ManualBlock::Bullet("Retire el nano-receptor 2.4 GHz de la ranura magnética en la parte inferior del teclado."),
+            ManualBlock::Bullet("Conecte el receptor a un puerto USB disponible del ordenador."),
+            ManualBlock::Bullet("Coloque el interruptor selector en '2.4G'."),
+            ManualBlock::Bullet("La conexión se establece automáticamente. En caso de pérdida de sincronización:"),
+            ManualBlock::Key("FN + R", "Mantenga presionado durante 3–5 segundos para iniciar el emparejamiento 2.4 GHz (el indicador parpadea rápidamente)."),
+            ManualBlock::H2("3. Modo Bluetooth 5.0 (3 Dispositivos Emparejados)"),
+            ManualBlock::Bullet("Coloque el interruptor selector en 'BT'."),
+            ManualBlock::Bullet("Para emparejar un dispositivo en una de las 3 ranuras de memoria Bluetooth:"),
+            ManualBlock::Key("FN + Q", "Mantenga presionado 3–5 s para el Canal BT 1 (el LED parpadea rápido; empareje 'FREEWOLF K8' en el sistema)."),
+            ManualBlock::Key("FN + W", "Mantenga presionado 3–5 s para el Canal BT 2 (el LED parpadea rápido; empareje 'FREEWOLF K8' en el sistema)."),
+            ManualBlock::Key("FN + E", "Mantenga presionado 3–5 s para el Canal BT 3 (el LED parpadea rápido; empareje 'FREEWOLF K8' en el sistema)."),
+            ManualBlock::Bullet("Para alternar rápidamente entre los dispositivos Bluetooth emparejados:"),
+            ManualBlock::Key("FN + Q / W / E", "Toque brevemente para cambiar al instante entre Dispositivo 1, 2 o 3."),
+            ManualBlock::Tip("Al cambiar de dispositivo Bluetooth, el indicador parpadea lentamente una vez y permanece fijo al reconectarse."),
+        ],
+    },
+    TopicInfo {
+        id: 2,
+        icon: "💻",
+        title: "Modos Windows y Mac",
+        blocks: &[
+            ManualBlock::Title("Modos de Sistema Operativo y Atajos de Función"),
+            ManualBlock::Body("El FREEWOLF K8 incluye perfiles de diseño dedicados por hardware para Windows y macOS, junto con una fila completa de funciones multimedia F1–F12."),
+            ManualBlock::H2("Cambio de Diseño de Sistema Operativo"),
+            ManualBlock::Key("FN + A", "Modo Windows (Diseño estándar de PC, tecla Win activa, Ctrl/Alt estándar)."),
+            ManualBlock::Key("FN + S", "Modo macOS (Intercambia teclas Option y Command según el diseño nativo de Mac)."),
+            ManualBlock::Key("FN + Win", "Bloqueo / Desbloqueo de Tecla Windows (Modo Gaming: desactiva Win para evitar salidas accidentales)."),
+            ManualBlock::H2("Atajos Multimedia F1 – F12"),
+            ManualBlock::TableRow("FN + F1", "Abrir reproductor multimedia predeterminado"),
+            ManualBlock::TableRow("FN + F2", "Bajar volumen"),
+            ManualBlock::TableRow("FN + F3", "Subir volumen"),
+            ManualBlock::TableRow("FN + F4", "Silenciar audio (Mute)"),
+            ManualBlock::TableRow("FN + F5", "Pista anterior"),
+            ManualBlock::TableRow("FN + F6", "Pista siguiente"),
+            ManualBlock::TableRow("FN + F7", "Reproducir / Pausar"),
+            ManualBlock::TableRow("FN + F8", "Detener reproducción"),
+            ManualBlock::TableRow("FN + F9", "Abrir navegador web"),
+            ManualBlock::TableRow("FN + F10", "Abrir cliente de correo electrónico"),
+            ManualBlock::TableRow("FN + F11", "Abrir Explorador de archivos / Mi Equipo"),
+            ManualBlock::TableRow("FN + F12", "Abrir calculadora"),
+        ],
+    },
+    TopicInfo {
+        id: 3,
+        icon: "💡",
+        title: "Iluminación y Atajos",
+        blocks: &[
+            ManualBlock::Title("Iluminación RGB y Atajos de Hardware"),
+            ManualBlock::Body("El teclado K8 cuenta con 21 modos de iluminación RGB distintos, incluyendo 19 animaciones dinámicas, iluminación estática y modo de visualizador musical por software."),
+            ManualBlock::H2("Controles de Iluminación Integrados"),
+            ManualBlock::Key("FN + |", "Alternar entre los 19 efectos dinámicos RGB (Estático, Respiración, Flujo Neón, Onda, Ondulaciones, etc.)."),
+            ManualBlock::Key("FN + ↑", "Aumentar brillo de la retroiluminación (5 niveles: 0% / Apagado a 100%)."),
+            ManualBlock::Key("FN + ↓", "Disminuir brillo de la retroiluminación. El nivel 0 apaga completamente los LEDs."),
+            ManualBlock::Key("FN + →", "Aumentar velocidad de animación (5 pasos dinámicos)."),
+            ManualBlock::Key("FN + ←", "Disminuir velocidad de animación (5 pasos dinámicos)."),
+            ManualBlock::H2("Control por Software en Linux"),
+            ManualBlock::Bullet("En la pestaña 'Iluminación' de esta app, haga clic en cualquier efecto y ajuste brillo (0–4) y retardo (0–4) en tiempo real."),
+            ManualBlock::Bullet("Modo Música: Transmite el espectro de frecuencias FFT de PulseAudio/PipeWire directamente a los LEDs del teclado."),
+            ManualBlock::Bullet("En la terminal: ejecute 'k8ctl set <id|nombre> --brightness <0-4> --speed <0-4>'."),
+            ManualBlock::Tip("Ajustar el brillo a 0 apaga los LEDs por completo, extendiendo la batería hasta 35 días en modo inalámbrico."),
+        ],
+    },
+    TopicInfo {
+        id: 4,
+        icon: "🎮",
+        title: "Perfiles Gamer y DIY",
+        blocks: &[
+            ManualBlock::Title("Perfiles de Iluminación para Juegos y Grabación Personalizada"),
+            ManualBlock::Body("El teclado cuenta con tres perfiles de iluminación preprogramados de fábrica para juegos, además de la capacidad de grabar mapas personalizados directamente en la memoria interna."),
+            ManualBlock::H2("Perfiles Gamer Integrados"),
+            ManualBlock::Key("FN + 1!", "Modo FPS — Ilumina W, A, S, D y las 4 teclas de dirección."),
+            ManualBlock::Key("FN + 2@", "Modo LOL / MOBA — Ilumina Q, W, E, R, D, F, G, V, B, Tab, Espacio, 1–6 y Esc."),
+            ManualBlock::Key("FN + 3#", "Modo Oficina — Ilumina las 26 letras (A–Z), puntuación y teclas de dirección."),
+            ManualBlock::H2("Cómo Grabar Mapas de Iluminación Personalizados"),
+            ManualBlock::Bullet("Paso 1: Presione FN + 1!, FN + 2@ o FN + 3# para seleccionar el perfil que desea personalizar."),
+            ManualBlock::Bullet("Paso 2: Presione FN + ~ (Virgulilla) para ingresar al modo de grabación. El LED indicador parpadeará rápidamente."),
+            ManualBlock::Bullet("Paso 3: Presione cualquier tecla del teclado para encender o apagar su LED individualmente."),
+            ManualBlock::Bullet("Paso 4: Presione FN + ~ nuevamente para guardar el patrón en la memoria EEPROM no volátil del teclado."),
+            ManualBlock::Tip("Los mapas grabados con FN + ~ se conservan al apagar el teclado y funcionan en modos con cable e inalámbrico sin software adicional."),
+        ],
+    },
+    TopicInfo {
+        id: 5,
+        icon: "🔋",
+        title: "Batería y Ahorro",
+        blocks: &[
+            ManualBlock::Title("Especificaciones de Batería y Ahorro de Energía"),
+            ManualBlock::Body("Alimentado por una batería recargable de iones de litio de alta capacidad de 4000 mAh, el K8 ofrece una excelente autonomía y gestión inteligente de energía."),
+            ManualBlock::H2("Duración de la Batería"),
+            ManualBlock::TableRow("Capacidad de la Batería", "4000 mAh de iones de litio recargable"),
+            ManualBlock::TableRow("Con RGB Encendido", "Aprox. 15 días (uso diario estándar de juegos/oficina)"),
+            ManualBlock::TableRow("Con RGB Apagado", "Hasta 35 días de uso continuo"),
+            ManualBlock::TableRow("Tiempo de Carga", "Aprox. 4 a 5 horas mediante puerto USB 5V/1A"),
+            ManualBlock::H2("Modos Inteligentes de Suspensión"),
+            ManualBlock::Bullet("Reposo de 5 minutos: Tras 5 minutos sin presionar teclas, la retroiluminación RGB se apaga automáticamente para ahorrar energía."),
+            ManualBlock::Bullet("Hibernación de 30 minutos: Tras 30 minutos de inactividad, el teclado entra en modo de hibernación de consumo ultrabajo."),
+            ManualBlock::Bullet("Reactivación Instantánea: Presione cualquier tecla dos veces para reactivar la conexión y continuar escribiendo de inmediato."),
+            ManualBlock::H2("Carga e Indicadores LED"),
+            ManualBlock::Bullet("Conecte el cable USB-C a cualquier puerto USB del ordenador o adaptador de pared de 5V."),
+            ManualBlock::Bullet("El LED indicador se ilumina durante la carga y se apaga al completarse al 100%."),
+            ManualBlock::Tip("Para maximizar la vida útil de la batería, evite dejarla completamente descargada durante períodos prolongados."),
+        ],
+    },
+    TopicInfo {
+        id: 6,
+        icon: "🔧",
+        title: "Cambio de Switches",
+        blocks: &[
+            ManualBlock::Title("Interruptores Hot-Swap y Mantenimiento"),
+            ManualBlock::Body("El FREEWOLF K8 cuenta con zócalos universales hot-swap en la placa base compatibles con interruptores mecánicos de 3 pines sin necesidad de soldar."),
+            ManualBlock::H2("Compatibilidad de Interruptores"),
+            ManualBlock::Bullet("Compatible con interruptores mecánicos estándar de 3 pines (Outemu, Gateron, Cherry MX, Kailh, AKKO, etc.)."),
+            ManualBlock::Bullet("Incluye dos (2) interruptores de repuesto, un extractor de teclas y un extractor metálico de interruptores en el paquete."),
+            ManualBlock::H2("Reemplazo de Interruptores Paso a Paso"),
+            ManualBlock::Bullet("1. Quitar Tecla: Enganche el extractor de teclas por debajo de las esquinas y tire verticalmente hacia arriba."),
+            ManualBlock::Bullet("2. Quitar Interruptor: Coloque las puntas del extractor en las pestañas superior e inferior del interruptor. Presione suavemente y tire en línea recta hacia arriba sin doblar."),
+            ManualBlock::Bullet("3. Inspeccionar Pines: Verifique los dos pines de contacto de cobre en la parte inferior del interruptor nuevo. Asegúrese de que ambos estén 100% rectos."),
+            ManualBlock::Bullet("4. Instalar Interruptor: Alinee los pines metálicos con los orificios del zócalo de la placa. Presione firmemente hacia abajo hasta que encaje en la placa metálica."),
+            ManualBlock::Bullet("5. Probar y Colocar Tecla: Pruebe el registro de la tecla antes de volver a colocar la tecla (keycap)."),
+            ManualBlock::H2("Limpieza y Cuidados"),
+            ManualBlock::Bullet("Desconecte siempre el cable y apague el interruptor de energía inalámbrica antes de limpiar."),
+            ManualBlock::Bullet("Use aire comprimido o un cepillo suave para eliminar polvo y residuos entre las teclas."),
+            ManualBlock::Bullet("Limpie las teclas con un paño de microfibra ligeramente humedecido. Nunca use alcohol, acetona ni disolventes agresivos."),
+            ManualBlock::Tip("Nunca fuerce un interruptor en el zócalo si siente resistencia. Retírelo y verifique que los pines de cobre no se hayan doblado."),
+        ],
+    },
+    TopicInfo {
+        id: 7,
+        icon: "🛠",
+        title: "Solución de Problemas",
+        blocks: &[
+            ManualBlock::Title("Guía de Solución de Problemas y Diagnósticos"),
+            ManualBlock::Body("Problemas frecuentes, pasos de diagnóstico y soluciones basados en las directrices oficiales del fabricante y la arquitectura del driver Linux."),
+            ManualBlock::H2("1. El teclado no responde en Modo Cableado"),
+            ManualBlock::Bullet("Selector de modo: Asegúrese de que el interruptor trasero/lateral esté en 'USB' o 'Wired'."),
+            ManualBlock::Bullet("Conexión del cable: Verifique que el cable USB-C esté firmemente insertado tanto en el teclado como en el ordenador."),
+            ManualBlock::Bullet("Permisos en Linux: Si el indicador muestra 'Permisos Requeridos', ejecute 'k8ctl setup-udev' para otorgar acceso sin root a /dev/hidraw*."),
+            ManualBlock::H2("2. El modo inalámbrico 2.4 GHz no se conecta"),
+            ManualBlock::Bullet("Ubicación del receptor: Asegúrese de que el nano-receptor USB 2.4G esté conectado a un puerto USB funcional."),
+            ManualBlock::Bullet("Interruptor de modo: Coloque el interruptor en '2.4G'."),
+            ManualBlock::Bullet("Reemparejamiento: Mantenga presionado FN + R durante 3 a 5 segundos hasta que el indicador parpadee rápidamente, luego acerque el teclado al receptor."),
+            ManualBlock::H2("3. La conexión o emparejamiento Bluetooth falla"),
+            ManualBlock::Bullet("Selector en BT: Asegúrese de que el interruptor esté en 'BT'."),
+            ManualBlock::Bullet("Modo de emparejamiento: Mantenga presionado FN + Q, FN + W o FN + E durante 3 a 5 segundos hasta que el LED parpadee rápidamente. En su ordenador o teléfono, elimine cualquier entrada previa de 'FREEWOLF K8' y vuelva a buscar."),
+            ManualBlock::Bullet("Interferencias: Asegúrese de estar dentro de un rango de 10 metros y evite obstáculos densos."),
+            ManualBlock::H2("4. La retroiluminación RGB no enciende o está tenue"),
+            ManualBlock::Bullet("Nivel de brillo: Presione FN + ↑ varias veces para aumentar el brillo (puede estar configurado en 0/apagado)."),
+            ManualBlock::Bullet("Cambiar efectos: Presione FN + | para ciclar entre los efectos luminosos."),
+            ManualBlock::Bullet("Ahorro de energía: Si estuvo inactivo más de 5 minutos, presione cualquier tecla dos veces para reactivarlo."),
+            ManualBlock::Bullet("Batería baja: En modo inalámbrico, la batería baja apaga los LEDs automáticamente. Conecte el cable USB-C para cargar."),
+            ManualBlock::H2("5. Una tecla específica no responde"),
+            ManualBlock::Bullet("Extraiga la tecla y el interruptor con las herramientas incluidas. Verifique los pines de cobre inferiores; si están doblados, enderécelos con cuidado con pinzas o instale uno de los interruptores de repuesto."),
+        ],
+    },
+    TopicInfo {
+        id: 8,
+        icon: "🐧",
+        title: "Driver Linux y CLI",
+        blocks: &[
+            ManualBlock::Title("Driver Nativo Linux y Utilidad CLI (k8ctl)"),
+            ManualBlock::Body("Esta aplicación proporciona un driver completamente nativo para Linux, configurador GUI y utilidad de línea de comandos para el teclado FREEWOLF K8, sin depender de software Windows ni Wine."),
+            ManualBlock::H2("Arquitectura de Hardware"),
+            ManualBlock::TableRow("USB Vendor ID", "0x1A2C"),
+            ManualBlock::TableRow("USB Product ID", "0x7C80"),
+            ManualBlock::TableRow("Interfaz de Control", "HID Interfaz 1 (/dev/hidraw*) — EP 0x02 Salida, EP 0x82 Entrada"),
+            ManualBlock::TableRow("Subsistema de Macros", "Dispositivo de teclado virtual Linux Kernel /dev/uinput"),
+            ManualBlock::TableRow("Captura de Audio", "Flujo monitor nativo PulseAudio / PipeWire"),
+            ManualBlock::H2("Permisos en Linux (k8ctl setup-udev)"),
+            ManualBlock::Body("Linux restringe el acceso directo a hidraw y uinput por defecto. Ejecute el comando de configuración una sola vez:"),
+            ManualBlock::Code("k8ctl setup-udev"),
+            ManualBlock::Body("Esto instala la regla /etc/udev/rules.d/99-freewolf-k8.rules y asigna uaccess al teclado, permitiendo el uso normal sin requerir sudo ni root."),
+            ManualBlock::H2("Herramienta de Línea de Comandos (k8ctl)"),
+            ManualBlock::Body("Controle su teclado mediante scripts, terminal o atajos:"),
+            ManualBlock::Code("k8ctl status"),
+            ManualBlock::Bullet("Muestra el estado de detección, nodo de dispositivo y disponibilidad del driver."),
+            ManualBlock::Code("k8ctl list"),
+            ManualBlock::Bullet("Lista los 21 modos de iluminación con sus identificadores."),
+            ManualBlock::Code("k8ctl set <id|nombre> [--brightness 0-4] [--speed 0-4]"),
+            ManualBlock::Bullet("Configura modo, brillo y retardo/velocidad. Ejemplo: 'k8ctl set 2 --brightness 4 --speed 2'."),
+            ManualBlock::Code("k8ctl music [--pattern 1|2] [--delay ms]"),
+            ManualBlock::Bullet("Transmite el visualizador de audio en tiempo real desde la terminal."),
+            ManualBlock::Code("k8ctl macro list"),
+            ManualBlock::Bullet("Lista todas las macros guardadas."),
+            ManualBlock::Code("k8ctl macro play <id>"),
+            ManualBlock::Bullet("Ejecuta macros usando el dispositivo de teclado virtual del kernel."),
+        ],
+    },
+];
+
+pub static TOPICS_FR: &[TopicInfo] = &[
+    TopicInfo {
+        id: 0,
+        icon: "📖",
+        title: "Aperçu & Spécifications",
+        blocks: &[
+            ManualBlock::Title("FREEWOLF K8 — Aperçu Technique et Spécifications"),
+            ManualBlock::Body("Le FREEWOLF K8 est un clavier mécanique de jeu haute performance au format 80% (100 touches), doté d'une connectivité Tri-Mode universelle (USB-C filaire, sans fil 2,4 GHz et Bluetooth 5.0 avec 3 profils). Équipé de sockets mécaniques remplaçables à chaud (hot-swap), d'un rétroéclairage RVB touche par touche et d'une batterie rechargeable de 4000 mAh, il assure une excellente productivité et expérience de jeu sous Linux, Windows et macOS."),
+            ManualBlock::H2("Spécifications Matérielles"),
+            ManualBlock::TableRow("Modèle", "FREEWOLF K8 Tri-Mode Mechanical Keyboard"),
+            ManualBlock::TableRow("Format", "80% Compact (100 touches avec pavé numérique intégré)"),
+            ManualBlock::TableRow("Dimensions", "395 mm × 142 mm × 40 mm (15,55 × 5,59 × 1,57 po)"),
+            ManualBlock::TableRow("Poids", "Environ 850 grammes"),
+            ManualBlock::TableRow("Switchs", "Mécaniques Hot-Swap (Sockets standard 3 broches, Blue Switch)"),
+            ManualBlock::TableRow("Touches (Keycaps)", "PBT Double-Injection (texturées, haute durabilité)"),
+            ManualBlock::TableRow("Anti-Ghosting", "Full-Key Rollover (NKRO / 100% anti-ghosting sans blocage)"),
+            ManualBlock::TableRow("Batterie", "4000 mAh Lithium-Ion Rechargeable"),
+            ManualBlock::TableRow("Connectivité", "Tri-Mode : USB-C Filaire, Sans Fil 2,4 GHz, Bluetooth 5.0 (BT1, BT2, BT3)"),
+            ManualBlock::TableRow("Identifiant USB", "VID: 0x1A2C  |  PID: 0x7C80  (Interface 1 HID)"),
+            ManualBlock::TableRow("Compatibilité", "Linux, Windows 11/10/8/7, macOS, Android, iOS"),
+            ManualBlock::H2("Contenu de la Boîte"),
+            ManualBlock::Bullet("Clavier Mécanique Gamer FREEWOLF K8"),
+            ManualBlock::Bullet("Câble Tressé USB-C vers USB-A pour connexion et charge"),
+            ManualBlock::Bullet("Nano-Récepteur USB Sans Fil 2,4 GHz (logé dans la base magnétique)"),
+            ManualBlock::Bullet("Extracteur de Touches en fil métallique"),
+            ManualBlock::Bullet("Extracteur Métallique de Switchs"),
+            ManualBlock::Bullet("Deux (2) Switchs Mécaniques de Rechange à 3 broches"),
+            ManualBlock::Bullet("Manuel d'Utilisation Officiel et Guide de Démarrage"),
+            ManualBlock::Tip("La base du clavier comprend des pieds rétractables ergonomiques à deux niveaux d'inclinaison et des patins antidérapants pour un confort et une stabilité accrus."),
+        ],
+    },
+    TopicInfo {
+        id: 1,
+        icon: "⚡",
+        title: "Connectivité Tri-Mode",
+        blocks: &[
+            ManualBlock::Title("Connectivité Tri-Mode et Multi-Appareils"),
+            ManualBlock::Body("Le clavier K8 permet de connecter jusqu'à cinq appareils simultanément grâce à trois modes de connexion : Câble USB-C, Sans Fil 2,4 GHz et Bluetooth 5.0 (3 canaux)."),
+            ManualBlock::H2("1. Mode Filaire USB-C"),
+            ManualBlock::Bullet("Réglez le commutateur matériel (à l'arrière/sur le côté) sur 'USB' ou 'Wired'."),
+            ManualBlock::Bullet("Branchez le câble USB-C au clavier et la fiche USB-A à votre ordinateur."),
+            ManualBlock::Bullet("Détection instantanée sous Linux avec zéro latence et chargement simultané de la batterie."),
+            ManualBlock::H2("2. Mode Sans Fil 2,4 GHz à Très Faible Latence"),
+            ManualBlock::Bullet("Retirez le nano-récepteur 2,4 GHz de son logement magnétique sous le clavier."),
+            ManualBlock::Bullet("Branchez le récepteur sur un port USB disponible de l'ordinateur."),
+            ManualBlock::Bullet("Réglez le commutateur sur '2.4G'."),
+            ManualBlock::Bullet("Connexion automatique. En cas de perte de signal :"),
+            ManualBlock::Key("FN + R", "Maintenez enfoncé pendant 3 à 5 secondes pour réinitialiser l'appairage 2,4 GHz (le voyant clignote rapidement)."),
+            ManualBlock::H2("3. Mode Bluetooth 5.0 (3 Appareils Mémorisés)"),
+            ManualBlock::Bullet("Réglez le commutateur sur 'BT'."),
+            ManualBlock::Bullet("Pour appairer un appareil sur l'un des 3 profils mémorisés :"),
+            ManualBlock::Key("FN + Q", "Appui long 3 à 5 s pour le Canal 1 (la LED clignote vite ; appairez 'FREEWOLF K8' sur l'hôte)."),
+            ManualBlock::Key("FN + W", "Appui long 3 à 5 s pour le Canal 2 (la LED clignote vite ; appairez 'FREEWOLF K8' sur l'hôte)."),
+            ManualBlock::Key("FN + E", "Appui long 3 à 5 s pour le Canal 3 (la LED clignote vite ; appairez 'FREEWOLF K8' sur l'hôte)."),
+            ManualBlock::Bullet("Pour basculer rapidement entre les appareils appairés :"),
+            ManualBlock::Key("FN + Q / W / E", "Appui court pour basculer instantanément vers l'Appareil 1, 2 ou 3."),
+            ManualBlock::Tip("Lors du basculement entre appareils Bluetooth, le voyant clignote lentement une fois puis reste allumé en continu."),
+        ],
+    },
+    TopicInfo {
+        id: 2,
+        icon: "💻",
+        title: "Modes Windows & Mac",
+        blocks: &[
+            ManualBlock::Title("Modes de Système d'Exploitation et Raccourcis Multimédia"),
+            ManualBlock::Body("Le FREEWOLF K8 intègre des profils matériels dédiés pour Windows et macOS, ainsi qu'une rangée complète de touches multimédias F1 à F12."),
+            ManualBlock::H2("Basculement de Système d'Exploitation"),
+            ManualBlock::Key("FN + A", "Passer en Mode Windows (Disposition PC standard, touche Win active, Ctrl/Alt standard)."),
+            ManualBlock::Key("FN + S", "Passer en Mode macOS (Inverse les touches Option et Commande pour la disposition native Mac)."),
+            ManualBlock::Key("FN + Win", "Verrouillage / Déverrouillage Touche Windows (Mode Gamer pour éviter les retours intempestifs sur le bureau)."),
+            ManualBlock::H2("Raccourcis Multimédia F1 à F12"),
+            ManualBlock::TableRow("FN + F1", "Ouvrir le lecteur multimédia par défaut"),
+            ManualBlock::TableRow("FN + F2", "Diminuer le volume"),
+            ManualBlock::TableRow("FN + F3", "Augmenter le volume"),
+            ManualBlock::TableRow("FN + F4", "Couper le son (Muet)"),
+            ManualBlock::TableRow("FN + F5", "Piste précédente"),
+            ManualBlock::TableRow("FN + F6", "Piste suivante"),
+            ManualBlock::TableRow("FN + F7", "Lecture / Pause"),
+            ManualBlock::TableRow("FN + F8", "Arrêter la lecture"),
+            ManualBlock::TableRow("FN + F9", "Ouvrir le navigateur web"),
+            ManualBlock::TableRow("FN + F10", "Ouvrir le client de messagerie"),
+            ManualBlock::TableRow("FN + F11", "Ouvrir le gestionnaire de fichiers / Mon Ordinateur"),
+            ManualBlock::TableRow("FN + F12", "Ouvrir la calculatrice"),
+        ],
+    },
+    TopicInfo {
+        id: 3,
+        icon: "💡",
+        title: "Éclairage RGB & Effets",
+        blocks: &[
+            ManualBlock::Title("Éclairage RVB et Raccourcis Matériels"),
+            ManualBlock::Body("Le clavier K8 propose 21 modes d'éclairage RVB, dont 19 animations dynamiques intégrées, un rétroéclairage fixe et un mode visualiseur audio logiciel."),
+            ManualBlock::H2("Contrôles de l'Éclairage au Clavier"),
+            ManualBlock::Key("FN + |", "Faire défiler les 19 effets RVB dynamiques (Fixe, Respiration, Flux Néon, Vague, Ondulations, etc.)."),
+            ManualBlock::Key("FN + ↑", "Augmenter la luminosité (5 niveaux : 0% / Éteint à 100%)."),
+            ManualBlock::Key("FN + ↓", "Diminuer la luminosité. Le niveau 0 éteint complètement les LED."),
+            ManualBlock::Key("FN + →", "Augmenter la vitesse d'animation (5 paliers dynamiques)."),
+            ManualBlock::Key("FN + ←", "Diminuer la vitesse d'animation (5 paliers dynamiques)."),
+            ManualBlock::H2("Contrôle Logiciel sous Linux"),
+            ManualBlock::Bullet("Dans l'onglet 'Éclairage' de cette application, cliquez directement sur n'importe quel effet et ajustez luminosité et vitesse en temps réel."),
+            ManualBlock::Bullet("Mode Musique : Transmet le spectre FFT audio de PulseAudio/PipeWire directement vers les LED du clavier."),
+            ManualBlock::Bullet("Dans le terminal : lancez 'k8ctl set <id|nom> --brightness <0-4> --speed <0-4>'."),
+            ManualBlock::Tip("Régler la luminosité sur 0 coupe l'alimentation des LED, prolongeant l'autonomie jusqu'à 35 jours en mode sans fil."),
+        ],
+    },
+    TopicInfo {
+        id: 4,
+        icon: "🎮",
+        title: "Profils Gaming & DIY",
+        blocks: &[
+            ManualBlock::Title("Profils de Jeu et Enregistrement Personnalisé"),
+            ManualBlock::Body("Le clavier dispose de trois profils d'éclairage préprogrammés pour le jeu, ainsi que de la possibilité d'enregistrer des motifs personnalisés directement dans la mémoire interne."),
+            ManualBlock::H2("Profils Gamer Intégrés"),
+            ManualBlock::Key("FN + 1!", "Mode FPS — Allume W, A, S, D et les 4 touches fléchées."),
+            ManualBlock::Key("FN + 2@", "Mode LOL / MOBA — Allume Q, W, E, R, D, F, G, V, B, Tab, Espace, 1–6 et Échap."),
+            ManualBlock::Key("FN + 3#", "Mode Bureautique — Allume les 26 lettres (A–Z), la ponctuation et les flèches."),
+            ManualBlock::H2("Enregistrer un Profil d'Éclairage Personnalisé"),
+            ManualBlock::Bullet("Étape 1 : Appuyez sur FN + 1!, FN + 2@ ou FN + 3# pour choisir l'emplacement à personnaliser."),
+            ManualBlock::Bullet("Étape 2 : Appuyez sur FN + ~ (Tilde) pour entrer en mode d'enregistrement. Le voyant LED commence à clignoter rapidement."),
+            ManualBlock::Bullet("Étape 3 : Appuyez sur les touches souhaitées pour activer ou éteindre individuellement leur LED."),
+            ManualBlock::Bullet("Étape 4 : Appuyez à nouveau sur FN + ~ pour sauvegarder le profil dans la mémoire EEPROM du clavier."),
+            ManualBlock::Tip("Les profils enregistrés avec FN + ~ restent en mémoire après extinction et fonctionnent avec ou sans fil sans aucun logiciel."),
+        ],
+    },
+    TopicInfo {
+        id: 5,
+        icon: "🔋",
+        title: "Batterie & Économie",
+        blocks: &[
+            ManualBlock::Title("Batterie et Économie d'Énergie"),
+            ManualBlock::Body("Doté d'une batterie lithium-ion haute capacité de 4000 mAh, le K8 offre une excellente autonomie et une gestion intelligente de l'énergie à plusieurs niveaux."),
+            ManualBlock::H2("Autonomie de la Batterie"),
+            ManualBlock::TableRow("Capacité de la Batterie", "4000 mAh Lithium-Ion Rechargeable"),
+            ManualBlock::TableRow("Avec RVB Allumé", "Environ 15 jours (utilisation quotidienne standard)"),
+            ManualBlock::TableRow("Avec RVB Éteint", "Jusqu'à 35 jours d'utilisation continue"),
+            ManualBlock::TableRow("Temps de Charge", "Env. 4 à 5 heures via un port USB 5V/1A"),
+            ManualBlock::H2("Modes de Veille Intelligents"),
+            ManualBlock::Bullet("Veille après 5 minutes : Après 5 minutes d'inactivité, l'éclairage RVB s'éteint automatiquement pour économiser l'énergie."),
+            ManualBlock::Bullet("Hibernation après 30 minutes : Après 30 minutes sans frappe, le clavier entre en veille profonde ultra-économique."),
+            ManualBlock::Bullet("Sortie de Veille Instantanée : Appuyez deux fois sur n'importe quelle touche pour réactiver la liaison immédiatement."),
+            ManualBlock::H2("Recharge et Indicateurs LED"),
+            ManualBlock::Bullet("Branchez le câble USB-C fourni sur un port USB d'ordinateur ou un adaptateur secteur 5V standard."),
+            ManualBlock::Bullet("Le voyant LED reste allumé pendant la charge et s'éteint une fois la batterie pleine à 100%."),
+            ManualBlock::Tip("Pour maximiser la longévité de la batterie, évitez de la laisser entièrement déchargée pendant de longues périodes."),
+        ],
+    },
+    TopicInfo {
+        id: 6,
+        icon: "🔧",
+        title: "Switchs Amovibles",
+        blocks: &[
+            ManualBlock::Title("Switchs Amovibles Hot-Swap et Entretien"),
+            ManualBlock::Body("Le FREEWOLF K8 intègre des sockets hot-swap universels compatibles avec les switchs mécaniques standard à 3 broches sans aucune soudure."),
+            ManualBlock::H2("Compatibilité des Switchs"),
+            ManualBlock::Bullet("Compatible avec les switchs mécaniques 3 broches (Outemu, Gateron, Cherry MX, Kailh, AKKO, etc.)."),
+            ManualBlock::Bullet("Deux (2) switchs de rechange, un extracteur de touches et un extracteur métallique de switchs sont fournis."),
+            ManualBlock::H2("Remplacement des Switchs Étape par Étape"),
+            ManualBlock::Bullet("1. Retirer la Touche : Placez l'extracteur de touche sous les coins et tirez droit vers le haut."),
+            ManualBlock::Bullet("2. Retirer le Switch : Placez les griffes de l'extracteur sur les ergots supérieur et inférieur du switch. Pressez délicatement et tirez droit vers le haut sans tordre."),
+            ManualBlock::Bullet("3. Inspecter les Broches : Vérifiez les deux broches en cuivre du nouveau switch pour vous assurer qu'elles sont parfaitement droites."),
+            ManualBlock::Bullet("4. Insérer le Switch : Alignez les broches avec les trous du socket et enfoncez fermement jusqu'à l'enclenchement dans la plaque métallique."),
+            ManualBlock::Bullet("5. Tester et Remonter : Vérifiez la frappe de la touche avant de réinstaller la touche (keycap)."),
+            ManualBlock::H2("Nettoyage et Entretien"),
+            ManualBlock::Bullet("Débranchez toujours le câble et éteignez le commutateur sans fil avant tout nettoyage."),
+            ManualBlock::Bullet("Utilisez de l'air comprimé ou une brosse souple pour éliminer la poussière entre les touches."),
+            ManualBlock::Bullet("Nettoyez les touches avec un chiffon en microfibre légèrement humide. N'utilisez jamais d'alcool ni de solvants agressifs."),
+            ManualBlock::Tip("Ne forcez jamais un switch dans son socket en cas de résistance. Retirez-le et assurez-vous que les broches de cuivre ne sont pas pliées."),
+        ],
+    },
+    TopicInfo {
+        id: 7,
+        icon: "🛠",
+        title: "Guide de Dépannage",
+        blocks: &[
+            ManualBlock::Title("Guide de Dépannage et Solutions"),
+            ManualBlock::Body("Problèmes fréquents, étapes de diagnostic et solutions recommandées d'après les manuels officiels et l'architecture du pilote Linux."),
+            ManualBlock::H2("1. Le clavier ne répond pas en Mode Filaire"),
+            ManualBlock::Bullet("Commutateur de mode : Vérifiez que le sélecteur arrière/latéral est positionné sur 'USB' ou 'Wired'."),
+            ManualBlock::Bullet("Branchement du câble : Vérifiez que le câble USB-C est bien enfoncé dans le clavier et l'ordinateur."),
+            ManualBlock::Bullet("Autorisations sous Linux : Si le statut indique 'Permissions Nécessaires', lancez 'k8ctl setup-udev' pour autoriser l'accès sans root à /dev/hidraw*."),
+            ManualBlock::H2("2. Le mode sans fil 2,4 GHz ne se connecte pas"),
+            ManualBlock::Bullet("Branchement du dongle : Assurez-vous que le nano-récepteur USB 2,4G est bien branché sur un port USB fonctionnel."),
+            ManualBlock::Bullet("Commutateur de mode : Positionnez le sélecteur sur '2.4G'."),
+            ManualBlock::Bullet("Réappairage : Maintenez FN + R pendant 3 à 5 secondes jusqu'à ce que le voyant clignote rapidement, puis approchez le clavier du récepteur."),
+            ManualBlock::H2("3. Échec de connexion ou d'appairage Bluetooth"),
+            ManualBlock::Bullet("Commutateur sur BT : Vérifiez que le sélecteur est bien sur 'BT'."),
+            ManualBlock::Bullet("Mode Appairage : Maintenez FN + Q, FN + W ou FN + E pendant 3 à 5 secondes jusqu'au clignotement rapide. Sur votre appareil, supprimez les anciens profils 'FREEWOLF K8' et relancez la recherche."),
+            ManualBlock::Bullet("Portée : Veillez à rester dans un rayon de 10 mètres sans obstacle massif."),
+            ManualBlock::H2("4. Le rétroéclairage RVB est éteint ou trop faible"),
+            ManualBlock::Bullet("Niveau de luminosité : Appuyez plusieurs fois sur FN + ↑ pour augmenter l'intensité (elle était peut-être à 0)."),
+            ManualBlock::Bullet("Changement de mode : Appuyez sur FN + | pour faire défiler les effets."),
+            ManualBlock::Bullet("Économie d'énergie : En cas d'inactivité de plus de 5 minutes, appuyez deux fois sur une touche pour réactiver le clavier."),
+            ManualBlock::Bullet("Batterie faible : En mode sans fil, une batterie faible coupe automatiquement les LED. Branchez le câble USB-C pour recharger."),
+            ManualBlock::H2("5. Une touche spécifique ne fonctionne plus"),
+            ManualBlock::Bullet("Retirez la touche et le switch à l'aide des outils fournis. Vérifiez si les broches en cuivre sont pliées. Redressez-les avec une pince ou remplacez le switch par l'un des switchs de rechange inclus."),
+        ],
+    },
+    TopicInfo {
+        id: 8,
+        icon: "🐧",
+        title: "Pilote Linux & CLI",
+        blocks: &[
+            ManualBlock::Title("Pilote Natif Linux et Outil CLI (k8ctl)"),
+            ManualBlock::Body("Cette suite fournit un pilote entièrement natif sous Linux, une interface graphique de configuration et un outil en ligne de commande pour le clavier FREEWOLF K8, sans logiciel Windows ni Wine."),
+            ManualBlock::H2("Architecture Matérielle"),
+            ManualBlock::TableRow("USB Vendor ID", "0x1A2C"),
+            ManualBlock::TableRow("USB Product ID", "0x7C80"),
+            ManualBlock::TableRow("Interface de Contrôle", "HID Interface 1 (/dev/hidraw*) — Sortie EP 0x02, Entrée EP 0x82"),
+            ManualBlock::TableRow("Sous-système Macro", "Périphérique de clavier virtuel Linux Kernel /dev/uinput"),
+            ManualBlock::TableRow("Capture Audio", "Flux moniteur natif PulseAudio / PipeWire"),
+            ManualBlock::H2("Autorisations sous Linux (k8ctl setup-udev)"),
+            ManualBlock::Body("Linux restreint par défaut l'accès direct aux nœuds hidraw et uinput. Lancez la configuration une seule fois :"),
+            ManualBlock::Code("k8ctl setup-udev"),
+            ManualBlock::Body("Cette commande installe la règle /etc/udev/rules.d/99-freewolf-k8.rules et attribue uaccess au clavier pour une utilisation sans sudo ni root."),
+            ManualBlock::H2("Outil en Ligne de Commande (k8ctl)"),
+            ManualBlock::Body("Contrôlez votre clavier depuis vos scripts, votre terminal ou vos raccourcis :"),
+            ManualBlock::Code("k8ctl status"),
+            ManualBlock::Bullet("Affiche l'état de détection, le nœud matériel et la disponibilité du pilote."),
+            ManualBlock::Code("k8ctl list"),
+            ManualBlock::Bullet("Liste l'ensemble des 21 modes d'éclairage avec leurs identifiants."),
+            ManualBlock::Code("k8ctl set <id|nom> [--brightness 0-4] [--speed 0-4]"),
+            ManualBlock::Bullet("Configure le mode, la luminosité et la vitesse. Exemple : 'k8ctl set 2 --brightness 4 --speed 2'."),
+            ManualBlock::Code("k8ctl music [--pattern 1|2] [--delay ms]"),
+            ManualBlock::Bullet("Diffuse le visualiseur audio en temps réel depuis le terminal."),
+            ManualBlock::Code("k8ctl macro list"),
+            ManualBlock::Bullet("Liste toutes les macros enregistrées."),
+            ManualBlock::Code("k8ctl macro play <id>"),
+            ManualBlock::Bullet("Exécute une macro via le clavier virtuel du noyau Linux."),
+        ],
+    },
+];
+
+pub static TOPICS_DE: &[TopicInfo] = &[
+    TopicInfo {
+        id: 0,
+        icon: "📖",
+        title: "Übersicht & Specs",
+        blocks: &[
+            ManualBlock::Title("FREEWOLF K8 — Technische Übersicht und Spezifikationen"),
+            ManualBlock::Body("Die FREEWOLF K8 ist eine leistungsstarke mechanische Gaming-Tastatur im 80%-Kompaktformat (100 Tasten) mit universeller Drei-Modus-Konnektivität (USB-C-Kabel, 2,4-GHz-Funk und Bluetooth 5.0 mit 3 Profilen). Ausgestattet mit Hot-Swap-fähigen mechanischen Switch-Sockeln, Einzeltasten-RGB-Beleuchtung und einem 4000-mAh-Akku bietet sie maximale Produktivität und Gaming-Leistung unter Linux, Windows und macOS."),
+            ManualBlock::H2("Hardware-Spezifikationen"),
+            ManualBlock::TableRow("Modell", "FREEWOLF K8 Tri-Mode Mechanical Keyboard"),
+            ManualBlock::TableRow("Layout", "80% Kompakt (100 Tasten mit integriertem Ziffernblock)"),
+            ManualBlock::TableRow("Abmessungen", "395 mm × 142 mm × 40 mm (15,55 × 5,59 × 1,57 Zoll)"),
+            ManualBlock::TableRow("Gewicht", "Ca. 850 Gramm"),
+            ManualBlock::TableRow("Schalter (Switches)", "Mechanisch Hot-Swap (Standard 3-Pin-Sockel, Blue Switch)"),
+            ManualBlock::TableRow("Tastenkappen (Keycaps)", "PBT Double-Injection (texturiert, verschleißfest)"),
+            ManualBlock::TableRow("Anti-Ghosting", "Full-Key Rollover (NKRO / 100% Anti-Ghosting ohne Blockaden)"),
+            ManualBlock::TableRow("Akku", "4000 mAh Lithium-Ionen wiederaufladbar"),
+            ManualBlock::TableRow("Konnektivität", "Drei-Modus: USB-C-Kabel, 2,4 GHz kabellos, Bluetooth 5.0 (BT1, BT2, BT3)"),
+            ManualBlock::TableRow("USB-Hardware-ID", "VID: 0x1A2C  |  PID: 0x7C80  (Interface 1 HID)"),
+            ManualBlock::TableRow("Kompatibilität", "Linux, Windows 11/10/8/7, macOS, Android, iOS"),
+            ManualBlock::H2("Lieferumfang"),
+            ManualBlock::Bullet("Mechanische Gaming-Tastatur FREEWOLF K8"),
+            ManualBlock::Bullet("Umflochtenes USB-C-auf-USB-A-Verbindungs- und Ladekabel"),
+            ManualBlock::Bullet("2,4-GHz-USB-Funk-Nano-Empfänger (im Magnetfach auf der Unterseite)"),
+            ManualBlock::Bullet("Präzisions-Tastenkappenabzieher aus Draht"),
+            ManualBlock::Bullet("Metallischer Switch-Abzieher"),
+            ManualBlock::Bullet("Zwei (2) mechanische Ersatz-Switches (3-Pin)"),
+            ManualBlock::Bullet("Offizielles Benutzerhandbuch und Schnellstartanleitung"),
+            ManualBlock::Tip("Die Unterseite der Tastatur verfügt über zweistufig verstellbare ergonomische Klappfüße und rutschfeste Gummipolster für sicheren Stand und optimalen Schreibkomfort."),
+        ],
+    },
+    TopicInfo {
+        id: 1,
+        icon: "⚡",
+        title: "Drei-Modus-Verbindung",
+        blocks: &[
+            ManualBlock::Title("Drei-Modus-Verbindung und Multi-Geräte-Betrieb"),
+            ManualBlock::Body("Die K8-Tastatur unterstützt bis zu fünf Geräte gleichzeitig über drei Verbindungsmodi: USB-C-Kabel, 2,4-GHz-Funk und Bluetooth 5.0 (3 Kanäle)."),
+            ManualBlock::H2("1. USB-C-Kabelmodus"),
+            ManualBlock::Bullet("Schieben Sie den Hardware-Schalter auf der Rückseite/Seite auf 'USB' oder 'Wired'."),
+            ManualBlock::Bullet("Verbinden Sie das USB-C-Kabel mit der Tastatur und den USB-A-Stecker mit dem Computer."),
+            ManualBlock::Bullet("Sofortige Erkennung unter Linux ohne Eingabeverzögerung bei gleichzeitigem Laden des Akkus."),
+            ManualBlock::H2("2. 2,4-GHz-Funkmodus mit extrem geringer Latenz"),
+            ManualBlock::Bullet("Entnehmen Sie den 2,4-GHz-Nano-Empfänger aus dem magnetischen Aufbewahrungsfach auf der Unterseite."),
+            ManualBlock::Bullet("Stecken Sie den Empfänger in einen freien USB-Port Ihres Computers."),
+            ManualBlock::Bullet("Schieben Sie den Schalter auf '2.4G'."),
+            ManualBlock::Bullet("Die Verbindung erfolgt automatisch. Bei Signalverlust oder zur Neukopplung:"),
+            ManualBlock::Key("FN + R", "3–5 Sekunden gedrückt halten, um das 2,4-GHz-Pairing zu starten (Anzeige blinkt schnell)."),
+            ManualBlock::H2("3. Bluetooth 5.0-Modus (3 gekoppelte Geräte)"),
+            ManualBlock::Bullet("Schieben Sie den Schalter auf 'BT'."),
+            ManualBlock::Bullet("So koppeln Sie ein Gerät auf einem der 3 Bluetooth-Speicherplätze:"),
+            ManualBlock::Key("FN + Q", "3–5 Sek. lang drücken für BT-Kanal 1 (LED blinkt schnell; koppeln Sie 'FREEWOLF K8' am Gerät)."),
+            ManualBlock::Key("FN + W", "3–5 Sek. lang drücken für BT-Kanal 2 (LED blinkt schnell; koppeln Sie 'FREEWOLF K8' am Gerät)."),
+            ManualBlock::Key("FN + E", "3–5 Sek. lang drücken für BT-Kanal 3 (LED blinkt schnell; koppeln Sie 'FREEWOLF K8' am Gerät)."),
+            ManualBlock::Bullet("So wechseln Sie blitzschnell zwischen gekoppelten Bluetooth-Geräten:"),
+            ManualBlock::Key("FN + Q / W / E", "Kurz drücken, um sofort zu Gerät 1, Gerät 2 oder Gerät 3 zu wechseln."),
+            ManualBlock::Tip("Beim Umschalten zwischen Bluetooth-Geräten blinkt die Anzeige einmal langsam auf und leuchtet nach erfolgreicher Wiederverbindung dauerhaft."),
+        ],
+    },
+    TopicInfo {
+        id: 2,
+        icon: "💻",
+        title: "Windows- & Mac-Modus",
+        blocks: &[
+            ManualBlock::Title("Betriebssystem-Layouts und Multimedia-Tastenkombinationen"),
+            ManualBlock::Body("Die FREEWOLF K8 bietet fest integrierte Layout-Profile für Windows und macOS sowie eine vollständige Reihe von F1–F12 Multimedia-Funktionen."),
+            ManualBlock::H2("Betriebssystem-Umschaltung"),
+            ManualBlock::Key("FN + A", "Windows-Modus aktivieren (Standard-PC-Layout, aktive Windows-Taste, Standard-Strg/Alt)."),
+            ManualBlock::Key("FN + S", "macOS-Modus aktivieren (Tauscht Option- und Command-Tasten für das native Mac-Layout)."),
+            ManualBlock::Key("FN + Win", "Windows-Tastensperre / Gaming-Modus (Deaktiviert Win-Taste gegen versehentliche Spielunterbrechungen)."),
+            ManualBlock::H2("Multimedia-Tastenkombinationen F1 – F12"),
+            ManualBlock::TableRow("FN + F1", "Standard-Medienplayer öffnen"),
+            ManualBlock::TableRow("FN + F2", "Lautstärke verringern"),
+            ManualBlock::TableRow("FN + F3", "Lautstärke erhöhen"),
+            ManualBlock::TableRow("FN + F4", "Ton stummschalten"),
+            ManualBlock::TableRow("FN + F5", "Vorheriger Titel"),
+            ManualBlock::TableRow("FN + F6", "Nächster Titel"),
+            ManualBlock::TableRow("FN + F7", "Wiedergabe / Pause"),
+            ManualBlock::TableRow("FN + F8", "Wiedergabe stoppen"),
+            ManualBlock::TableRow("FN + F9", "Webbrowser öffnen"),
+            ManualBlock::TableRow("FN + F10", "E-Mail-Programm öffnen"),
+            ManualBlock::TableRow("FN + F11", "Dateimanager / Arbeitsplatz öffnen"),
+            ManualBlock::TableRow("FN + F12", "Taschenrechner öffnen"),
+        ],
+    },
+    TopicInfo {
+        id: 3,
+        icon: "💡",
+        title: "RGB-Beleuchtung & Effekte",
+        blocks: &[
+            ManualBlock::Title("RGB-Beleuchtung und Hardware-Tastenkombinationen"),
+            ManualBlock::Body("Die K8-Tastatur verfügt über 21 verschiedene RGB-Beleuchtungsmodi, darunter 19 dynamische Animationen, statische Beleuchtung und softwaregesteuerten Musik-Visualisierer."),
+            ManualBlock::H2("Integrierte Beleuchtungssteuerung"),
+            ManualBlock::Key("FN + |", "Durchschalten der 19 dynamischen RGB-Effekte (Statisch, Atmung, Neon-Strom, Welle, Wellenringe usw.)."),
+            ManualBlock::Key("FN + ↑", "Helligkeit erhöhen (5 Stufen: 0% / Aus bis 100%)."),
+            ManualBlock::Key("FN + ↓", "Helligkeit verringern. Stufe 0 schaltet alle LEDs komplett ab."),
+            ManualBlock::Key("FN + →", "Animationsgeschwindigkeit erhöhen (5 dynamische Stufen)."),
+            ManualBlock::Key("FN + ←", "Animationsgeschwindigkeit verringern (5 dynamische Stufen)."),
+            ManualBlock::H2("Software-Steuerung unter Linux"),
+            ManualBlock::Bullet("Auf dem Reiter 'Beleuchtung' können Sie jeden Modus direkt anklicken und Helligkeit (0–4) sowie Tempo (0–4) ohne Verzögerung einstellen."),
+            ManualBlock::Bullet("Musikmodus: Wandelt das PulseAudio/PipeWire-Audiosignal in Echtzeit in LED-Lichtwellen auf der Tastatur um."),
+            ManualBlock::Bullet("Im Terminal: 'k8ctl set <id|name> --brightness <0-4> --speed <0-4>' ausführen."),
+            ManualBlock::Tip("Das Reduzieren der Helligkeit auf 0 schaltet die LEDs ab und verlängert die Akkulaufzeit im Funkbetrieb auf bis zu 35 Tage."),
+        ],
+    },
+    TopicInfo {
+        id: 4,
+        icon: "🎮",
+        title: "Gaming & Eigene Profile",
+        blocks: &[
+            ManualBlock::Title("Gaming-Beleuchtungsprofile und eigene Aufnahme"),
+            ManualBlock::Body("Die Tastatur enthält drei werksseitig vorprogrammierte Gaming-Beleuchtungsprofile sowie die Möglichkeit, eigene Beleuchtungsmasken direkt im Onboard-Speicher abzulegen."),
+            ManualBlock::H2("Integrierte Gaming-Profile"),
+            ManualBlock::Key("FN + 1!", "FPS-Modus — Beleuchtet W, A, S, D und die 4 Pfeiltasten."),
+            ManualBlock::Key("FN + 2@", "LOL / MOBA-Modus — Beleuchtet Q, W, E, R, D, F, G, V, B, Tab, Leertaste, 1–6 und Esc."),
+            ManualBlock::Key("FN + 3#", "Office-Modus — Beleuchtet alle 26 Buchstaben (A–Z), Satzzeichen und Pfeiltasten."),
+            ManualBlock::H2("Eigene Beleuchtungsmasken aufnehmen"),
+            ManualBlock::Bullet("Schritt 1: Drücken Sie FN + 1!, FN + 2@ oder FN + 3#, um den gewünschten Speicherplatz auszuwählen."),
+            ManualBlock::Bullet("Schritt 2: Drücken Sie FN + ~ (Tilde), um den Aufnahmemodus zu starten. Die LED-Anzeige beginnt schnell zu blinken."),
+            ManualBlock::Bullet("Schritt 3: Drücken Sie die Tasten, deren Beleuchtung Sie individuell ein- oder ausschalten möchten."),
+            ManualBlock::Bullet("Schritt 4: Drücken Sie erneut FN + ~, um das Muster dauerhaft im internen EEPROM-Speicher der Tastatur zu sichern."),
+            ManualBlock::Tip("Über FN + ~ gespeicherte Profile bleiben nach dem Ausschalten erhalten und funktionieren im Kabel- und Funkbetrieb ohne zusätzliche Software."),
+        ],
+    },
+    TopicInfo {
+        id: 5,
+        icon: "🔋",
+        title: "Akku & Energiesparen",
+        blocks: &[
+            ManualBlock::Title("Akkuspezifikationen und Energiesparmodi"),
+            ManualBlock::Body("Ausgestattet mit einem 4000-mAh-Lithium-Ionen-Akku bietet die K8 lange kabellose Laufzeiten und ein intelligentes mehrstufiges Energiemanagement."),
+            ManualBlock::H2("Akkulaufzeit"),
+            ManualBlock::TableRow("Akkukapazität", "4000 mAh Lithium-Ionen wiederaufladbar"),
+            ManualBlock::TableRow("Mit aktiver RGB-Beleuchtung", "Ca. 15 Tage (bei typischer täglicher Nutzung)"),
+            ManualBlock::TableRow("Ohne Beleuchtung (LEDs aus)", "Bis zu 35 Tage kontinuierliche Nutzung"),
+            ManualBlock::TableRow("Ladezeit", "Ca. 4–5 Stunden über einen 5V/1A USB-Anschluss"),
+            ManualBlock::H2("Intelligente Ruhemodi"),
+            ManualBlock::Bullet("5-Minuten-Ruhezustand: Nach 5 Minuten ohne Tastenbetätigung schaltet sich die RGB-Beleuchtung automatisch ab."),
+            ManualBlock::Bullet("30-Minuten-Tiefschlaf: Nach 30 Minuten Inaktivität wechselt die Tastatur in den stromsparenden Tiefschlafmodus."),
+            ManualBlock::Bullet("Sofortiges Aufwecken: Drücken Sie eine beliebige Taste zweimal, um die Verbindung sofort wieder zu aktivieren."),
+            ManualBlock::H2("Laden und LED-Anzeigen"),
+            ManualBlock::Bullet("Schließen Sie das mitgelieferte USB-C-Kabel an einen USB-Port des Computers oder ein 5V-Netzteil an."),
+            ManualBlock::Bullet("Die Lade-LED leuchtet während des Ladevorgangs und erlischt, sobald der Akku zu 100% geladen ist."),
+            ManualBlock::Tip("Vermeiden Sie es, den Akku über längere Zeiträume vollständig entladen zu lagern, um seine Lebensdauer zu maximieren."),
+        ],
+    },
+    TopicInfo {
+        id: 6,
+        icon: "🔧",
+        title: "Switch-Wechsel & Pflege",
+        blocks: &[
+            ManualBlock::Title("Hot-Swap-Schalter und Pflege"),
+            ManualBlock::Body("Die FREEWOLF K8 besitzt universelle Hot-Swap-Sockel auf der Platine, die den werkzeuglosen Wechsel von 3-Pin-Schaltern ohne Lötarbeiten ermöglichen."),
+            ManualBlock::H2("Schalter-Kompatibilität"),
+            ManualBlock::Bullet("Unterstützt mechanische 3-Pin-Standard-Switches (Outemu, Gateron, Cherry MX, Kailh, AKKO usw.)."),
+            ManualBlock::Bullet("Zwei (2) Ersatz-Switches, ein Draht-Tastenkappenabzieher und ein Schalterabzieher aus Metall sind im Lieferumfang enthalten."),
+            ManualBlock::H2("Schritt-für-Schritt-Schalterwechsel"),
+            ManualBlock::Bullet("1. Tastenkappe entfernen: Tastenkappenabzieher unter den Ecken ansetzen und senkrecht nach oben ziehen."),
+            ManualBlock::Bullet("2. Schalter entfernen: Zangen des Schalterabziehers an der oberen und unteren Verriegelungslasche ansetzen, sanft zusammendrücken und gerade nach oben herausziehen."),
+            ManualBlock::Bullet("3. Kontakte prüfen: Prüfen Sie die beiden Kupferkontakte des neuen Schalters auf einwandfreie Geradheit."),
+            ManualBlock::Bullet("4. Schalter einsetzen: Pins an den Sockelöffnungen ausrichten und fest nach unten drücken, bis der Switch in der Metallplatte einrastet."),
+            ManualBlock::Bullet("5. Testen und Montieren: Tastenfunktion vor dem Aufsetzen der Tastenkappe überprüfen."),
+            ManualBlock::H2("Reinigung und Pflege"),
+            ManualBlock::Bullet("Vor dem Reinigen stets das Kabel trennen und den Funkschalter ausschalten."),
+            ManualBlock::Bullet("Druckluft oder einen weichen Pinsel verwenden, um Staub und Partikel zwischen den Tasten zu entfernen."),
+            ManualBlock::Bullet("Tastenkappen mit einem leicht angefeuchteten Mikrofasertuch abwischen. Niemals Alkohol oder scharfe Lösungsmittel verwenden."),
+            ManualBlock::Tip("Niemals Gewalt anwenden, falls beim Einsetzen Widerstand spürbar ist. Schalter herausnehmen und Kupferpins auf Verbiegung prüfen."),
+        ],
+    },
+    TopicInfo {
+        id: 7,
+        icon: "🛠",
+        title: "Fehlerbehebung",
+        blocks: &[
+            ManualBlock::Title("Fehlerbehebung und Lösungen"),
+            ManualBlock::Body("Häufige Fragen, Diagnosehinweise und Lösungen basierend auf den Herstellerhandbüchern und der Linux-Treiberarchitektur."),
+            ManualBlock::H2("1. Tastatur reagiert im Kabelmodus nicht"),
+            ManualBlock::Bullet("Schalterstellung prüfen: Vergewissern Sie sich, dass der Schalter auf 'USB' oder 'Wired' steht."),
+            ManualBlock::Bullet("Kabelverbindung: Prüfen Sie, ob das USB-C-Kabel fest in Tastatur und Computer eingesteckt ist."),
+            ManualBlock::Bullet("Linux-Berechtigungen: Zeigt das Statussymbol 'Berechtigung erforderlich', führen Sie 'k8ctl setup-udev' aus, um den Zugriff auf /dev/hidraw* freizuschalten."),
+            ManualBlock::H2("2. 2,4-GHz-Funk stellt keine Verbindung her"),
+            ManualBlock::Bullet("Empfänger prüfen: Stellen Sie sicher, dass der 2,4G-USB-Nano-Empfänger an einem funktionierenden USB-Port angeschlossen ist."),
+            ManualBlock::Bullet("Schalterstellung: Schieben Sie den Schalter auf '2.4G'."),
+            ManualBlock::Bullet("Neukopplung: Halten Sie FN + R für 3 bis 5 Sekunden gedrückt, bis die Anzeige schnell blinkt, und bringen Sie die Tastatur nah an den Empfänger."),
+            ManualBlock::H2("3. Bluetooth-Kopplung oder -Verbindung schlägt fehl"),
+            ManualBlock::Bullet("Schalter auf BT: Vergewissern Sie sich, dass der Schalter auf 'BT' steht."),
+            ManualBlock::Bullet("Kopplungsmodus: Halten Sie FN + Q, FN + W oder FN + E für 3–5 Sekunden gedrückt, bis die LED schnell blinkt. Löschen Sie alte 'FREEWOLF K8'-Einträge auf Ihrem Gerät und scannen Sie neu."),
+            ManualBlock::Bullet("Reichweite: Achten Sie auf einen Abstand unter 10 Metern ohne dichte Hindernisse."),
+            ManualBlock::H2("4. RGB-Beleuchtung leuchtet nicht oder ist schwach"),
+            ManualBlock::Bullet("Helligkeitsstufe: Drücken Sie mehrfach FN + ↑, um die Helligkeit zu erhöhen (eventuell war sie auf 0/aus gestellt)."),
+            ManualBlock::Bullet("Effekt wechseln: Drücken Sie FN + |, um die Beleuchtungsmodi durchzuschalten."),
+            ManualBlock::Bullet("Energiesparmodus: Bei Inaktivität über 5 Minuten drücken Sie eine beliebige Taste zweimal, um die Beleuchtung aufzuwecken."),
+            ManualBlock::Bullet("Niedriger Akkustand: Im Funkbetrieb schaltet ein schwacher Akku die LEDs ab. Schließen Sie das USB-C-Kabel zum Laden an."),
+            ManualBlock::H2("5. Eine bestimmte Taste löst nicht aus"),
+            ManualBlock::Bullet("Ziehen Sie Tastenkappe und Switch mit den beiliegenden Abziehern ab. Überprüfen Sie die unteren Kupferpins auf Verbiegungen. Richten Sie sie vorsichtig mit einer Pinzette aus oder setzen Sie einen der beiliegenden Ersatz-Switches ein."),
+        ],
+    },
+    TopicInfo {
+        id: 8,
+        icon: "🐧",
+        title: "Linux-Treiber & CLI",
+        blocks: &[
+            ManualBlock::Title("Nativer Linux-Treiber und CLI-Werkzeug (k8ctl)"),
+            ManualBlock::Body("Diese Anwendung bietet einen vollständig nativen Linux-Treiber, eine GUI-Konfiguration und ein Befehlszeilenwerkzeug für die FREEWOLF K8-Tastatur, ganz ohne Windows-Software oder Wine."),
+            ManualBlock::H2("Hardware-Architektur"),
+            ManualBlock::TableRow("USB-Hersteller-ID (VID)", "0x1A2C"),
+            ManualBlock::TableRow("USB-Produkt-ID (PID)", "0x7C80"),
+            ManualBlock::TableRow("Steuerschnittstelle", "HID Interface 1 (/dev/hidraw*) — Ausgabe EP 0x02, Eingabe EP 0x82"),
+            ManualBlock::TableRow("Makro-Subsystem", "Linux Kernel /dev/uinput virtuelles Tastaturgerät"),
+            ManualBlock::TableRow("Audio-Erfassung", "Nativer PulseAudio / PipeWire Monitor-Stream"),
+            ManualBlock::H2("Linux-Berechtigungen (k8ctl setup-udev)"),
+            ManualBlock::Body("Linux beschränkt den Direktzugriff auf hidraw- und uinput-Geräteknoten standardmäßig. Führen Sie den Setup-Befehl einmalig aus:"),
+            ManualBlock::Code("k8ctl setup-udev"),
+            ManualBlock::Body("Dies installiert /etc/udev/rules.d/99-freewolf-k8.rules und versieht das Gerät mit uaccess, sodass es ohne sudo oder Root-Rechte genutzt werden kann."),
+            ManualBlock::H2("Befehlszeilenwerkzeug (k8ctl)"),
+            ManualBlock::Body("Steuern Sie Ihre Tastatur aus Skripten, dem Terminal oder per Tastenkürzel:"),
+            ManualBlock::Code("k8ctl status"),
+            ManualBlock::Bullet("Zeigt Erkennungsstatus, Geräteknoten und Treiberbereitschaft."),
+            ManualBlock::Code("k8ctl list"),
+            ManualBlock::Bullet("Listet alle 21 Beleuchtungsmodi mit ihren IDs auf."),
+            ManualBlock::Code("k8ctl set <id|name> [--brightness 0-4] [--speed 0-4]"),
+            ManualBlock::Bullet("Stellt Modus, Helligkeit und Tempo ein. Beispiel: 'k8ctl set 2 --brightness 4 --speed 2'."),
+            ManualBlock::Code("k8ctl music [--pattern 1|2] [--delay ms]"),
+            ManualBlock::Bullet("Startet den Echtzeit-Audio-Visualisierer direkt aus dem Terminal."),
+            ManualBlock::Code("k8ctl macro list"),
+            ManualBlock::Bullet("Listet alle gespeicherten Makros auf."),
+            ManualBlock::Code("k8ctl macro play <id>"),
+            ManualBlock::Bullet("Führt Makros über das virtuelle Tastaturgerät des Linux-Kernels aus."),
+        ],
+    },
+];
+
+pub fn get_topics(lang: &str) -> &'static [TopicInfo] {
     match lang {
-        "pt" => vec![
-            TopicInfo {
-                id: 0,
-                icon: "📋",
-                title: "Visão Geral e Specs",
-                content: "=== VISÃO GERAL DO TECLADO FREEWOLF K8 ===\n\n\
-                O teclado mecânico FREEWOLF K8 é um teclado gamer tri-modo de alto desempenho.\n\n\
-                ESPECIFICAÇÕES TÉCNICAS:\n\
-                • Modelo: FREEWOLF K8\n\
-                • Teclas: 100 teclas (layout compacto com teclado numérico)\n\
-                • Switches: Hot-Swap de 3 e 5 pinos\n\
-                • Conexões: USB Tipo-C, 2.4 GHz sem fio, Bluetooth 5.0 (3 perfis)\n\
-                • Bateria: Lítio 4000 mAh recarregável\n\
-                • Iluminação: RGB com 20 modos dinâmicos e reativo ao som\n\
-                • Compatibilidade: Linux, Windows, macOS, Android, iOS\n\
-                • Taxa de Polling: 1000 Hz (Cabo / 2.4G), 125 Hz (Bluetooth)",
-            },
-            TopicInfo {
-                id: 1,
-                icon: "📶",
-                title: "Conectividade Tri-Modo",
-                content: "=== CONECTIVIDADE TRI-MODO ===\n\n\
-                O teclado suporta três modos de conexão selecionáveis pela chave física traseira:\n\n\
-                1. MODO CABO USB:\n\
-                   • Coloque a chave traseira na posição central (OFF/Cabo).\n\
-                   • Conecte o cabo USB Tipo-C ao computador.\n\n\
-                2. MODO SEM FIO 2.4 GHz:\n\
-                   • Coloque a chave traseira na posição 'G' (2.4G).\n\
-                   • Conecte o receptor USB ao computador.\n\
-                   • Pressione Fn + R por 3 segundos para emparelhar se necessário.\n\n\
-                3. MODO BLUETOOTH 5.0:\n\
-                   • Coloque a chave traseira na posição 'B' (Bluetooth).\n\
-                   • Fn + Q: Perfil Bluetooth 1 (LED azul)\n\
-                   • Fn + W: Perfil Bluetooth 2 (LED ciano)\n\
-                   • Fn + E: Perfil Bluetooth 3 (LED roxo)\n\
-                   • Segure Fn + Q/W/E por 3 a 5 segundos para entrar em modo de pareamento.",
-            },
-            TopicInfo {
-                id: 2,
-                icon: "💻",
-                title: "Modos Windows e Mac",
-                content: "=== SISTEMAS OPERACIONAIS E ATALHOS ===\n\n\
-                Alternância de Layout:\n\
-                • Fn + A: Modo Windows (layout PC padrão, tecla Win ativa).\n\
-                • Fn + S: Modo Mac (inverte as teclas Option e Command para layout nativo Apple).\n\
-                • Fn + Win: Bloqueio da tecla Windows (Modo Gamer).\n\n\
-                Teclas Multimídia F1 - F12:\n\
-                • Fn + F1: Reprodutor de mídia\n\
-                • Fn + F2: Diminuir volume\n\
-                • Fn + F3: Aumentar volume\n\
-                • Fn + F4: Silenciar (Mute)\n\
-                • Fn + F5: Faixa anterior\n\
-                • Fn + F6: Próxima faixa\n\
-                • Fn + F7: Reproduzir / Pausar\n\
-                • Fn + F8: Parar reprodução\n\
-                • Fn + F9: Navegador Web\n\
-                • Fn + F10: Email\n\
-                • Fn + F11: Meu Computador / Arquivos\n\
-                • Fn + F12: Calculadora",
-            },
-            TopicInfo {
-                id: 3,
-                icon: "✨",
-                title: "Iluminação RGB e Efeitos",
-                content: "=== CONTROLE DE ILUMINAÇÃO RGB ===\n\n\
-                Atalhos de Iluminação:\n\
-                • Fn + \\| : Alternar entre os 19 efeitos de iluminação integrados.\n\
-                • Fn + ↑ / ↓ : Ajustar o brilho (5 níveis, incluindo desligado).\n\
-                • Fn + ← / → : Ajustar a velocidade da animação (5 níveis).\n\
-                • Fn + Backspace : Ligar / Desligar toda a iluminação.\n\
-                • Fn + ~ : Gravação de mapa de iluminação customizado.\n\n\
-                No aplicativo Linux, você pode selecionar diretamente qualquer um dos 20 modos,\n\
-                incluindo o modo Música com visualizador em tempo real.",
-            },
-            TopicInfo {
-                id: 4,
-                icon: "🎯",
-                title: "Perfis Gamer e DIY",
-                content: "=== PERFIS GAMER E ILUMINAÇÃO CUSTOMIZADA ===\n\n\
-                Presets de Iluminação para Jogos:\n\
-                • Fn + 1: Modo FPS (W, A, S, D e setas direcionais iluminados).\n\
-                • Fn + 2: Modo LOL / MOBA (Q, W, E, R, D, F, B, 1-7 iluminados).\n\
-                • Fn + 3: Modo Escritório (37 teclas principais de digitação iluminadas).\n\n\
-                Gravando Iluminação Customizada (DIY):\n\
-                1. Pressione Fn + 1, 2 ou 3 para escolher o slot de gravação.\n\
-                2. Segure Fn + ~ até que o indicador pisque para entrar no modo gravação.\n\
-                3. Pressione repetidamente cada tecla desejada para mudar sua cor.\n\
-                4. Pressione Fn + ~ novamente para salvar na memória EEPROM do teclado.",
-            },
-            TopicInfo {
-                id: 5,
-                icon: "🔋",
-                title: "Bateria e Economia",
-                content: "=== BATERIA E GERENCIAMENTO DE ENERGIA ===\n\n\
-                • Bateria interna: 4000 mAh de polímero de lítio.\n\
-                • Autonomia:\n\
-                  - Com iluminação RGB ligada: até 30 horas contínuas.\n\
-                  - Com iluminação desligada: até 200 horas.\n\
-                • Suspensão Inteligente:\n\
-                  - O teclado entra em modo de economia após 2 minutos sem uso.\n\
-                  - Suspensão profunda após 30 minutos.\n\
-                  - Qualquer tecla reativa instantaneamente sem perda de digitação.\n\
-                • Indicador de Carga: o LED sob a barra de espaço ou tecla FN pisca em vermelho\n\
-                  durante o carregamento e fica verde quando totalmente carregado.",
-            },
-            TopicInfo {
-                id: 6,
-                icon: "🔧",
-                title: "Troca de Switches",
-                content: "=== HOT-SWAP E MANUTENÇÃO DOS SWITCHES ===\n\n\
-                O FREEWOLF K8 possui soquetes Hot-Swap padrão compatíveis com a maioria dos\n\
-                switches mecânicos de 3 pinos e 5 pinos (estilo MX, Cherry, Gateron, Outemu, Kailh).\n\n\
-                Passo a passo para troca:\n\
-                1. Desconecte o teclado do computador ou desligue a chave traseira.\n\
-                2. Use o extrator de keycaps para remover cuidadosamente a capa da tecla.\n\
-                3. Encaixe o extrator metálico de switches nas travas superior e inferior do switch.\n\
-                4. Puxe para cima suavemente sem torcer.\n\
-                5. Certifique-se de que os pinos de metal do novo switch estão retos antes de inserir.\n\
-                6. Pressione o novo switch no soquete até ouvir um clique firme.",
-            },
-            TopicInfo {
-                id: 7,
-                icon: "❓",
-                title: "Solução de Problemas",
-                content: "=== SOLUÇÃO DE PROBLEMAS FREQUENTES ===\n\n\
-                1. O teclado não responde no Linux:\n\
-                   • Verifique a posição da chave traseira (central para USB com fio).\n\
-                   • Execute 'k8ctl setup-udev' para conceder permissões de acesso ao /dev/hidraw.\n\n\
-                2. Teclado capturado por máquina virtual (QEMU/KVM):\n\
-                   • Feche o QEMU ou desanexe o dispositivo USB 1a2c:7c80 da VM convidada.\n\n\
-                3. Falha na reprodução de macros:\n\
-                   • O Linux requer permissões de gravação em /dev/uinput para injetar teclas.\n\
-                   • Execute 'k8ctl setup-udev' para corrigir automaticamente.\n\n\
-                4. Reset de Fábrica via Teclado:\n\
-                   • Segure Fn + Barra de Espaço por 3 segundos para resetar o teclado.",
-            },
-            TopicInfo {
-                id: 8,
-                icon: "🐧",
-                title: "Driver Linux e CLI",
-                content: "=== COMANDOS E RECURSOS DO DRIVER LINUX ===\n\n\
-                O aplicativo nativo FREE WOLF K8 oferece controle completo via interface gráfica (GUI)\n\
-                e via terminal (CLI) em um único binário executável.\n\n\
-                Comandos rápidos no terminal:\n\
-                • k8ctl status              : Exibe o status da conexão USB e permissões.\n\
-                • k8ctl setup-udev          : Instala as regras de permissão udev automaticamente.\n\
-                • k8ctl list                : Lista todos os 21 modos de iluminação.\n\
-                • k8ctl set steady -b 4     : Define modo Estático no brilho máximo.\n\
-                • k8ctl set breathing -s 2  : Define modo Respiração na velocidade 2.\n\
-                • k8ctl set 0               : Desliga toda a iluminação (economia de bateria).\n\
-                • k8ctl music -m 2          : Inicia o visualizador de áudio em tempo real.\n\
-                • k8ctl macro list          : Lista macros gravados.",
-            },
-        ],
-        _ => vec![
-            TopicInfo {
-                id: 0,
-                icon: "📋",
-                title: "Overview & Specs",
-                content: "=== FREE WOLF K8 KEYBOARD OVERVIEW ===\n\n\
-                The FREE WOLF K8 is a high-performance tri-mode mechanical gaming keyboard.\n\n\
-                HARDWARE SPECIFICATIONS:\n\
-                • Model: FREE WOLF K8\n\
-                • Keys: 100 Keys (compact 96% layout with dedicated numeric keypad)\n\
-                • Switches: Hot-Swappable 3-pin & 5-pin MX compatible sockets\n\
-                • Connectivity: USB Type-C, 2.4 GHz Wireless, Bluetooth 5.0 (3 channels)\n\
-                • Battery: 4000 mAh rechargeable lithium polymer battery\n\
-                • Lighting: Dynamic RGB with 20 preset hardware effects + Audio Visualizer\n\
-                • System Compatibility: Linux, Windows, macOS, Android, iOS\n\
-                • Polling Rate: 1000 Hz (Wired / 2.4G), 125 Hz (Bluetooth)",
-            },
-            TopicInfo {
-                id: 1,
-                icon: "📶",
-                title: "Tri-Mode Connectivity",
-                content: "=== TRI-MODE CONNECTIVITY GUIDE ===\n\n\
-                Select the hardware connection mode using the physical switch on the rear panel:\n\n\
-                1. WIRED USB MODE:\n\
-                   • Set the rear switch to the center position (OFF/Wired).\n\
-                   • Connect the USB Type-C cable to your PC.\n\n\
-                2. 2.4 GHz WIRELESS MODE:\n\
-                   • Set the rear switch to 'G' (2.4G).\n\
-                   • Insert the USB wireless receiver into your PC.\n\
-                   • Press and hold Fn + R for 3 seconds to re-pair if needed.\n\n\
-                3. BLUETOOTH 5.0 MODE:\n\
-                   • Set the rear switch to 'B' (Bluetooth).\n\
-                   • Fn + Q: Bluetooth Channel 1 (Blue LED)\n\
-                   • Fn + W: Bluetooth Channel 2 (Cyan LED)\n\
-                   • Fn + E: Bluetooth Channel 3 (Purple LED)\n\
-                   • Press and hold Fn + Q/W/E for 3–5 seconds to enter pairing mode.",
-            },
-            TopicInfo {
-                id: 2,
-                icon: "💻",
-                title: "Windows & Mac Layout",
-                content: "=== OPERATING SYSTEM LAYOUTS & HOTKEYS ===\n\n\
-                OS Profile Switching:\n\
-                • Fn + A: Switch to Windows Mode (Standard PC layout, Windows key active).\n\
-                • Fn + S: Switch to macOS Mode (Swaps Option and Command keys for native Mac layout).\n\
-                • Fn + Win: Windows Key Lock / Unlock (Gaming Mode: prevents accidental desktop minimization).\n\n\
-                F1 – F12 Multimedia Hotkeys:\n\
-                • Fn + F1: Default Media Player\n\
-                • Fn + F2: Volume Down\n\
-                • Fn + F3: Volume Up\n\
-                • Fn + F4: Mute Audio\n\
-                • Fn + F5: Previous Track\n\
-                • Fn + F6: Next Track\n\
-                • Fn + F7: Play / Pause\n\
-                • Fn + F8: Stop Playback\n\
-                • Fn + F9: Web Browser\n\
-                • Fn + F10: Email Client\n\
-                • Fn + F11: File Manager / This PC\n\
-                • Fn + F12: Calculator",
-            },
-            TopicInfo {
-                id: 3,
-                icon: "✨",
-                title: "RGB Lighting Controls",
-                content: "=== RGB LIGHTING SHORTCUTS & MODES ===\n\n\
-                On-Keyboard Lighting Controls:\n\
-                • Fn + \\| : Cycle through 19 dynamic built-in hardware lighting effects.\n\
-                • Fn + ↑ / ↓ : Adjust brightness levels (5 steps: 0% / Off to 100%).\n\
-                • Fn + ← / → : Adjust animation speed (5 dynamic steps).\n\
-                • Fn + Backspace : Toggle all backlights On / Off (Power Saving).\n\
-                • Fn + ~ : Record custom key lighting map to onboard EEPROM.\n\n\
-                In the Linux application, you can directly activate any of the 20 lighting modes,\n\
-                including the real-time Music Mode spectrum visualizer.",
-            },
-            TopicInfo {
-                id: 4,
-                icon: "🎯",
-                title: "Gaming & Custom Keys",
-                content: "=== GAMING PRESETS & ONBOARD RECORDING ===\n\n\
-                Gaming Backlighting Presets:\n\
-                • Fn + 1: FPS Mode (W, A, S, D, and Arrow keys illuminated).\n\
-                • Fn + 2: LOL / MOBA Mode (Q, W, E, R, D, F, B, 1-7 illuminated).\n\
-                • Fn + 3: Office Mode (37 primary typing keys illuminated).\n\n\
-                Custom Lighting Map Recording (DIY):\n\
-                1. Press Fn + 1, 2, or 3 to select the preset slot.\n\
-                2. Hold Fn + ~ until the indicator LED flashes to enter recording mode.\n\
-                3. Press each individual key repeatedly to cycle through colors.\n\
-                4. Press Fn + ~ again to save the custom map to onboard keyboard memory.",
-            },
-            TopicInfo {
-                id: 5,
-                icon: "🔋",
-                title: "Battery & Power Saving",
-                content: "=== BATTERY & POWER MANAGEMENT ===\n\n\
-                • Battery Capacity: 4000 mAh rechargeable lithium polymer.\n\
-                • Battery Life:\n\
-                  - RGB active: up to 30 continuous hours.\n\
-                  - RGB off: up to 200 continuous hours.\n\
-                • Intelligent Sleep Timer:\n\
-                  - Light sleep after 2 minutes of idle time.\n\
-                  - Deep sleep after 30 minutes of idle time.\n\
-                  - Any keystroke wakes the keyboard instantly without input lag or missed keys.\n\
-                • Charging Indicator: Red LED blinks under spacebar during charge, turns green when full.",
-            },
-            TopicInfo {
-                id: 6,
-                icon: "🔧",
-                title: "Hot-Swap & Switches",
-                content: "=== HOT-SWAPPABLE SWITCHES & MAINTENANCE ===\n\n\
-                The FREE WOLF K8 features universal Hot-Swap sockets compatible with almost all\n\
-                3-pin and 5-pin mechanical switches (Cherry MX, Gateron, Outemu, Kailh, etc.).\n\n\
-                How to swap a switch:\n\
-                1. Disconnect the USB cable or power off the keyboard.\n\
-                2. Use the wire keycap puller to remove the keycap vertically.\n\
-                3. Align the metal switch puller with the top and bottom retaining clips of the switch.\n\
-                4. Squeeze and pull straight up.\n\
-                5. Verify that the two metal pins on the new switch are completely straight.\n\
-                6. Align pins with the PCB socket holes and push down firmly until it clicks.",
-            },
-            TopicInfo {
-                id: 7,
-                icon: "❓",
-                title: "Troubleshooting Guide",
-                content: "=== LINUX TROUBLESHOOTING GUIDE ===\n\n\
-                1. Device Not Detected:\n\
-                   • Ensure the rear switch is in the center position for wired USB mode.\n\
-                   • Run 'k8ctl setup-udev' to configure permissions for /dev/hidraw.\n\n\
-                2. Device Claimed by Virtual Machine (QEMU/KVM):\n\
-                   • Close QEMU or detach USB device 1a2c:7c80 from the guest OS.\n\n\
-                3. Virtual Keyboard Macro Playback Fails:\n\
-                   • Macro playback requires write permissions to /dev/uinput.\n\
-                   • Run 'k8ctl setup-udev' to automatically install permissions.\n\n\
-                4. Factory Reset via Hardware Shortcut:\n\
-                   • Press and hold Fn + Spacebar for 3 seconds to restore default factory settings.",
-            },
-            TopicInfo {
-                id: 8,
-                icon: "🐧",
-                title: "Linux Driver & CLI",
-                content: "=== LINUX DRIVER & CLI FEATURES ===\n\n\
-                The native FREE WOLF K8 application provides complete control via both Graphical (GUI)\n\
-                and Command-Line (CLI) modes within a single high-performance binary.\n\n\
-                Quick CLI Commands:\n\
-                • k8ctl status              : Display connection, permissions, and device node.\n\
-                • k8ctl setup-udev          : Install udev rules and configure /dev/uinput access.\n\
-                • k8ctl list                : List all 21 lighting modes with parameters.\n\
-                • k8ctl set steady -b 4     : Set full static backlighting.\n\
-                • k8ctl set breathing -s 2  : Set Breathing mode at speed 2.\n\
-                • k8ctl set 0               : Turn off all RGB backlights (power saver).\n\
-                • k8ctl music -m 2          : Launch real-time live audio spectrum visualizer.\n\
-                • k8ctl macro list          : View all saved macros.",
-            },
-        ],
+        "pt" => TOPICS_PT,
+        "es" => TOPICS_ES,
+        "fr" => TOPICS_FR,
+        "de" => TOPICS_DE,
+        _ => TOPICS_EN,
     }
 }

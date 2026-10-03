@@ -4,20 +4,23 @@
 use std::cell::RefCell;
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use libadwaita as adw;
 use adw::prelude::*;
 use gtk4::prelude::*;
 use gtk4::{
-    Align, Box as GtkBox, Button, CheckButton, DropDown, Fixed, Image, Label,
-    Orientation, PasswordEntry, Picture, Scale, ScrolledWindow, Separator,
-    Stack, StringList, TextView, WrapMode,
+    Align, Box as GtkBox, Button, CheckButton, DropDown, Entry, EventControllerKey, FileChooserAction,
+    FileChooserNative, Fixed, Grid, Image, Label, ListBox, ListBoxRow, Orientation, PasswordEntry,
+    Picture, Scale, ScrolledWindow, Separator, Stack, StringList, TextBuffer, TextTag, TextView,
+    Window, WrapMode,
 };
 use crate::config::{ConfigManager, Settings};
 use crate::driver::{FreeWolfK8Driver, DeviceState};
 use crate::i18n::{LANGUAGES, get_mode_name, t};
-use crate::macro_mgr::{Macro, MacroManager, UinputPlayer};
-use crate::manual::get_topics;
+use crate::macro_mgr::{
+    Macro, MacroAction, MacroManager, UinputPlayer, DELAY_RECORD, DELAY_NONE, DELAY_DEFAULT,
+};
+use crate::manual::{get_topics, ManualBlock, TopicInfo};
 use crate::music::MusicVisualizerEngine;
 use crate::protocol::{LIGHT_MODES, LightMode};
 
@@ -34,8 +37,9 @@ struct AppState {
     settings: Settings,
     current_mode: &'static LightMode,
     macro_mgr: MacroManager,
-    #[allow(dead_code)]
-    current_macro: Option<Macro>,
+    current_macro_id: Option<u32>,
+    is_recording: bool,
+    record_last_instant: Option<Instant>,
     music_engine: MusicVisualizerEngine,
     current_help_topic: usize,
     is_music_active: bool,
@@ -61,6 +65,378 @@ fn get_asset_path(rel: &str) -> Option<PathBuf> {
     None
 }
 
+fn key_to_info(key: &gtk4::gdk::Key, hw_code: u32) -> (String, u16) {
+    let name = key.name().unwrap_or_else(|| glib::GString::from("Unknown"));
+    let name_str = name.as_str();
+
+    let (desc, evcode) = match name_str {
+        "Escape" => ("Key Esc".to_string(), 1),
+        "Return" => ("Key Enter".to_string(), 28),
+        "BackSpace" => ("Key Backspace".to_string(), 14),
+        "Tab" | "ISO_Left_Tab" => ("Key Tab".to_string(), 15),
+        "space" => ("Key Space".to_string(), 57),
+        "Caps_Lock" => ("Key Caps Lock".to_string(), 58),
+        "Shift_L" => ("Key Shift".to_string(), 42),
+        "Shift_R" => ("Key Right Shift".to_string(), 54),
+        "Control_L" => ("Key Ctrl".to_string(), 29),
+        "Control_R" => ("Key Right Ctrl".to_string(), 97),
+        "Alt_L" => ("Key Alt".to_string(), 56),
+        "Alt_R" => ("Key Right Alt".to_string(), 100),
+        "Super_L" => ("Key Win".to_string(), 125),
+        "Super_R" => ("Key Right Win".to_string(), 126),
+        "Up" => ("Key Up".to_string(), 103),
+        "Down" => ("Key Down".to_string(), 108),
+        "Left" => ("Key Left".to_string(), 105),
+        "Right" => ("Key Right".to_string(), 106),
+        "Insert" => ("Key Insert".to_string(), 110),
+        "Delete" => ("Key Delete".to_string(), 111),
+        "Home" => ("Key Home".to_string(), 102),
+        "End" => ("Key End".to_string(), 107),
+        "Page_Up" | "Prior" => ("Key Page Up".to_string(), 104),
+        "Page_Down" | "Next" => ("Key Page Down".to_string(), 109),
+        "minus" | "underscore" => ("Key -".to_string(), 12),
+        "equal" | "plus" => ("Key =".to_string(), 13),
+        "bracketleft" | "braceleft" => ("Key [".to_string(), 26),
+        "bracketright" | "braceright" => ("Key ]".to_string(), 27),
+        "backslash" | "bar" => ("Key \\".to_string(), 43),
+        "semicolon" | "colon" => ("Key ;".to_string(), 39),
+        "apostrophe" | "quotedbl" => ("Key '".to_string(), 40),
+        "grave" | "asciitilde" => ("Key `".to_string(), 41),
+        "comma" | "less" => ("Key ,".to_string(), 51),
+        "period" | "greater" => ("Key .".to_string(), 52),
+        "slash" | "question" => ("Key /".to_string(), 53),
+        s if s.starts_with('F') && s.len() <= 3 && s[1..].chars().all(|c| c.is_ascii_digit()) => {
+            let num: u16 = s[1..].parse().unwrap_or(1);
+            let code = match num {
+                1..=10 => 58 + num,
+                11 => 87,
+                12 => 88,
+                _ => 0,
+            };
+            (format!("Key F{}", num), code)
+        }
+        s if s.len() == 1 => {
+            let ch = s.chars().next().unwrap().to_ascii_uppercase();
+            let d = format!("Key {}", ch);
+            let c = crate::macro_mgr::desc_to_evkey(&d);
+            (d, c)
+        }
+        other => {
+            let d = format!("Key {}", other);
+            let c = crate::macro_mgr::desc_to_evkey(&d);
+            (d, c)
+        }
+    };
+
+    let final_evcode = if evcode != 0 {
+        evcode
+    } else if hw_code >= 8 {
+        (hw_code - 8) as u16
+    } else {
+        hw_code as u16
+    };
+
+    (desc, final_evcode)
+}
+
+fn show_input_dialog<F: Fn(String) + 'static>(
+    parent: &adw::ApplicationWindow,
+    title: &str,
+    prompt: &str,
+    initial_text: &str,
+    on_ok: F,
+) {
+    let dialog = Window::builder()
+        .title(title)
+        .transient_for(parent)
+        .modal(true)
+        .destroy_with_parent(true)
+        .resizable(false)
+        .build();
+    dialog.set_default_size(320, 140);
+
+    let vbox = GtkBox::new(Orientation::Vertical, 10);
+    vbox.set_margin_start(16);
+    vbox.set_margin_end(16);
+    vbox.set_margin_top(16);
+    vbox.set_margin_bottom(16);
+
+    let lbl = Label::new(Some(prompt));
+    lbl.set_halign(Align::Start);
+    lbl.add_css_class("field-title");
+    vbox.append(&lbl);
+
+    let entry = Entry::new();
+    entry.set_text(initial_text);
+    entry.add_css_class("entry-dark");
+    vbox.append(&entry);
+
+    let btn_box = GtkBox::new(Orientation::Horizontal, 8);
+    btn_box.set_halign(Align::End);
+
+    let btn_cancel = Button::with_label("Cancel");
+    btn_cancel.add_css_class("secondary-btn");
+    let btn_ok = Button::with_label("OK");
+    btn_ok.add_css_class("accent-btn");
+
+    btn_box.append(&btn_cancel);
+    btn_box.append(&btn_ok);
+    vbox.append(&btn_box);
+
+    dialog.set_child(Some(&vbox));
+
+    let dlg_cancel = dialog.clone();
+    btn_cancel.connect_clicked(move |_| {
+        dlg_cancel.close();
+    });
+
+    let dlg_ok = dialog.clone();
+    let entry_ok = entry.clone();
+    btn_ok.connect_clicked(move |_| {
+        let val = entry_ok.text().to_string();
+        on_ok(val);
+        dlg_ok.close();
+    });
+
+    dialog.present();
+}
+
+fn show_confirm_dialog<F: Fn() + 'static>(
+    parent: &adw::ApplicationWindow,
+    title: &str,
+    prompt: &str,
+    on_confirm: F,
+) {
+    let dialog = Window::builder()
+        .title(title)
+        .transient_for(parent)
+        .modal(true)
+        .destroy_with_parent(true)
+        .resizable(false)
+        .build();
+    dialog.set_default_size(320, 130);
+
+    let vbox = GtkBox::new(Orientation::Vertical, 12);
+    vbox.set_margin_start(16);
+    vbox.set_margin_end(16);
+    vbox.set_margin_top(16);
+    vbox.set_margin_bottom(16);
+
+    let lbl = Label::new(Some(prompt));
+    lbl.set_wrap(true);
+    lbl.set_halign(Align::Start);
+    vbox.append(&lbl);
+
+    let btn_box = GtkBox::new(Orientation::Horizontal, 8);
+    btn_box.set_halign(Align::End);
+
+    let btn_cancel = Button::with_label("Cancel");
+    btn_cancel.add_css_class("secondary-btn");
+    let btn_ok = Button::with_label("Delete");
+    btn_ok.add_css_class("destructive-btn");
+
+    btn_box.append(&btn_cancel);
+    btn_box.append(&btn_ok);
+    vbox.append(&btn_box);
+
+    dialog.set_child(Some(&vbox));
+
+    let dlg_cancel = dialog.clone();
+    btn_cancel.connect_clicked(move |_| {
+        dlg_cancel.close();
+    });
+
+    let dlg_ok = dialog.clone();
+    btn_ok.connect_clicked(move |_| {
+        on_confirm();
+        dlg_ok.close();
+    });
+
+    dialog.present();
+}
+
+fn create_action_row(action: &MacroAction, lang: &str) -> ListBoxRow {
+    let row = ListBoxRow::new();
+    let hbox = GtkBox::new(Orientation::Horizontal, 0);
+    hbox.add_css_class("macro-table-row");
+
+    let lbl_desc = Label::new(Some(&action.desc));
+    lbl_desc.set_hexpand(true);
+    lbl_desc.set_halign(Align::Start);
+    lbl_desc.set_margin_start(8);
+
+    let act_text = if action.action == "Down" {
+        t(lang, "action_down")
+    } else {
+        t(lang, "action_up")
+    };
+    let lbl_action = Label::new(Some(act_text));
+    lbl_action.set_width_request(100);
+    lbl_action.set_halign(Align::Center);
+
+    let lbl_delay = Label::new(Some(&action.delay_ms.to_string()));
+    lbl_delay.set_width_request(100);
+    lbl_delay.set_halign(Align::Center);
+
+    hbox.append(&lbl_desc);
+    hbox.append(&lbl_action);
+    hbox.append(&lbl_delay);
+    row.set_child(Some(&hbox));
+    row
+}
+
+fn populate_action_table(listbox: &ListBox, actions: &[MacroAction], lang: &str) {
+    while let Some(child) = listbox.first_child() {
+        listbox.remove(&child);
+    }
+    for action in actions {
+        let row = create_action_row(action, lang);
+        listbox.append(&row);
+    }
+}
+
+fn populate_macro_list(listbox: &ListBox, macros: &[Macro], selected_id: Option<u32>) {
+    while let Some(child) = listbox.first_child() {
+        listbox.remove(&child);
+    }
+    let mut sel_row = None;
+    for (idx, m) in macros.iter().enumerate() {
+        let row = ListBoxRow::new();
+        let lbl = Label::new(Some(&format!("  {}", m.name)));
+        lbl.set_halign(Align::Start);
+        lbl.set_margin_start(8);
+        lbl.set_margin_top(4);
+        lbl.set_margin_bottom(4);
+        lbl.add_css_class("field-title");
+        row.set_child(Some(&lbl));
+        listbox.append(&row);
+
+        if Some(m.id) == selected_id || (selected_id.is_none() && idx == 0) {
+            sel_row = Some(row.clone());
+        }
+    }
+    if let Some(r) = sel_row {
+        listbox.select_row(Some(&r));
+    }
+}
+
+fn setup_help_tags(buf: &TextBuffer) {
+    let tag_table = buf.tag_table();
+
+    let tag_h2 = TextTag::new(Some("h2"));
+    tag_h2.set_property("foreground", "#027ad7");
+    tag_h2.set_property("weight", 700);
+    tag_h2.set_property("pixels-above-lines", 14);
+    tag_h2.set_property("pixels-below-lines", 6);
+    tag_h2.set_property("left-margin", 16);
+    tag_h2.set_property("right-margin", 16);
+    tag_table.add(&tag_h2);
+
+    let tag_body = TextTag::new(Some("body"));
+    tag_body.set_property("foreground", "#d8dee9");
+    tag_body.set_property("pixels-above-lines", 3);
+    tag_body.set_property("pixels-below-lines", 4);
+    tag_body.set_property("left-margin", 16);
+    tag_body.set_property("right-margin", 16);
+    tag_table.add(&tag_body);
+
+    let tag_bullet_dot = TextTag::new(Some("bullet_dot"));
+    tag_bullet_dot.set_property("foreground", "#027ad7");
+    tag_bullet_dot.set_property("weight", 700);
+    tag_bullet_dot.set_property("left-margin", 16);
+    tag_table.add(&tag_bullet_dot);
+
+    let tag_bullet = TextTag::new(Some("bullet"));
+    tag_bullet.set_property("foreground", "#d8dee9");
+    tag_bullet.set_property("pixels-above-lines", 2);
+    tag_bullet.set_property("pixels-below-lines", 3);
+    tag_bullet.set_property("left-margin", 28);
+    tag_bullet.set_property("right-margin", 16);
+    tag_table.add(&tag_bullet);
+
+    let tag_keycap = TextTag::new(Some("keycap"));
+    tag_keycap.set_property("foreground", "#8ce10b");
+    tag_keycap.set_property("background", "#1a2133");
+    tag_keycap.set_property("weight", 700);
+    tag_table.add(&tag_keycap);
+
+    let tag_keydesc = TextTag::new(Some("keydesc"));
+    tag_keydesc.set_property("foreground", "#d8dee9");
+    tag_keydesc.set_property("pixels-above-lines", 3);
+    tag_keydesc.set_property("pixels-below-lines", 3);
+    tag_keydesc.set_property("left-margin", 16);
+    tag_keydesc.set_property("right-margin", 16);
+    tag_table.add(&tag_keydesc);
+
+    let tag_table_lbl = TextTag::new(Some("table_lbl"));
+    tag_table_lbl.set_property("foreground", "#ffffff");
+    tag_table_lbl.set_property("weight", 700);
+    tag_table_lbl.set_property("left-margin", 16);
+    tag_table.add(&tag_table_lbl);
+
+    let tag_table_val = TextTag::new(Some("table_val"));
+    tag_table_val.set_property("foreground", "#d8dee9");
+    tag_table_val.set_property("left-margin", 16);
+    tag_table_val.set_property("right-margin", 16);
+    tag_table.add(&tag_table_val);
+
+    let tag_code = TextTag::new(Some("code"));
+    tag_code.set_property("font", "Monospace 9");
+    tag_code.set_property("foreground", "#61afef");
+    tag_code.set_property("background", "#161924");
+    tag_code.set_property("pixels-above-lines", 4);
+    tag_code.set_property("pixels-below-lines", 4);
+    tag_code.set_property("left-margin", 24);
+    tag_code.set_property("right-margin", 24);
+    tag_table.add(&tag_code);
+
+    let tag_tip = TextTag::new(Some("tip"));
+    tag_tip.set_property("foreground", "#ffb900");
+    tag_tip.set_property("background", "#222638");
+    tag_tip.set_property("pixels-above-lines", 6);
+    tag_tip.set_property("pixels-below-lines", 6);
+    tag_tip.set_property("left-margin", 20);
+    tag_tip.set_property("right-margin", 20);
+    tag_table.add(&tag_tip);
+}
+
+fn render_topic_content(buf: &TextBuffer, topic: &TopicInfo, pic: Option<&Picture>) {
+    buf.set_text("");
+    if let Some(p) = pic {
+        p.set_visible(topic.id == 0);
+    }
+    let mut it = buf.end_iter();
+    for block in topic.blocks {
+        match block {
+            ManualBlock::Title(_) => {}
+            ManualBlock::H2(h) => {
+                buf.insert_with_tags_by_name(&mut it, &format!("{}\n", h), &["h2"]);
+            }
+            ManualBlock::Body(b) => {
+                buf.insert_with_tags_by_name(&mut it, &format!("{}\n", b), &["body"]);
+            }
+            ManualBlock::Bullet(b) => {
+                buf.insert_with_tags_by_name(&mut it, "• ", &["bullet_dot"]);
+                buf.insert_with_tags_by_name(&mut it, &format!("{}\n", b), &["bullet"]);
+            }
+            ManualBlock::Key(k, desc) => {
+                buf.insert_with_tags_by_name(&mut it, &format!(" [ {:^16} ] ", k), &["keycap"]);
+                buf.insert_with_tags_by_name(&mut it, &format!("  {}\n", desc), &["keydesc"]);
+            }
+            ManualBlock::TableRow(lbl, val) => {
+                buf.insert_with_tags_by_name(&mut it, &format!("{:<26} ", lbl), &["table_lbl"]);
+                buf.insert_with_tags_by_name(&mut it, &format!(": {}\n", val), &["table_val"]);
+            }
+            ManualBlock::Code(c) => {
+                buf.insert_with_tags_by_name(&mut it, &format!("   {}\n", c), &["code"]);
+            }
+            ManualBlock::Tip(t) => {
+                buf.insert_with_tags_by_name(&mut it, &format!(" 💡 Tip: {}\n", t), &["tip"]);
+            }
+        }
+    }
+}
+
 fn build_ui(app: &adw::Application) {
     // Force Dark Theme
     let style_manager = adw::StyleManager::default();
@@ -69,152 +445,203 @@ fn build_ui(app: &adw::Application) {
     // Apply custom Argonaut GNOME theme styling matching the Python Tkinter app EXACTLY
     let provider = gtk4::CssProvider::new();
     provider.load_from_data(
-        "window {\n\
-             background-color: #0e1019;\n\
-         }\n\
-         headerbar {\n\
-             background-color: #0e1019;\n\
-             border-bottom: 1px solid #181c2e;\n\
-             color: #ffffff;\n\
-             min-height: 38px;\n\
-         }\n\
-         headerbar .title {\n\
-             font-weight: bold;\n\
-             font-size: 12px;\n\
-             color: #ffffff;\n\
-         }\n\
-         .sidebar-bg {\n\
-             background-color: #0e1019;\n\
-             border-right: 1px solid #181c2e;\n\
-         }\n\
-         .nav-btn {\n\
-             background-color: transparent;\n\
-             border: none;\n\
-             border-radius: 0;\n\
-             min-width: 48px;\n\
-             min-height: 44px;\n\
-             padding: 0;\n\
-         }\n\
-         .nav-btn:hover {\n\
-             background-color: #161b2c;\n\
-         }\n\
-         .nav-btn-active {\n\
-             background-color: #132238;\n\
-             border-left: 3px solid #027ad7;\n\
-         }\n\
-         .card-panel {\n\
-             background-color: #151829;\n\
-             border: 1px solid #232840;\n\
-             border-radius: 0;\n\
-             padding: 0;\n\
-         }\n\
-         .card-title {\n\
-             font-size: 11px;\n\
-             font-weight: bold;\n\
-             color: #ffffff;\n\
-         }\n\
-         .field-title {\n\
-             font-size: 10px;\n\
-             font-weight: bold;\n\
-             color: #ffffff;\n\
-         }\n\
-         .badge-connected {\n\
-             background-color: #101321;\n\
-             color: #8ce10b;\n\
-             border: 1px solid #8ce10b;\n\
-             font-weight: bold;\n\
-             font-size: 11px;\n\
-             padding: 5px 6px;\n\
-         }\n\
-         .badge-warning {\n\
-             background-color: #101321;\n\
-             color: #ffb900;\n\
-             border: 1px solid #ffb900;\n\
-             font-weight: bold;\n\
-             font-size: 11px;\n\
-             padding: 5px 6px;\n\
-         }\n\
-         .badge-disconnected {\n\
-             background-color: #101321;\n\
-             color: #7e88a0;\n\
-             border: 1px solid #232840;\n\
-             font-weight: bold;\n\
-             font-size: 11px;\n\
-             padding: 5px 6px;\n\
-         }\n\
-         .status-circle-ok {\n\
-             background-color: #8ce10b;\n\
-             border-radius: 5px;\n\
-             min-width: 10px;\n\
-             min-height: 10px;\n\
-         }\n\
-         .status-circle-warn {\n\
-             background-color: #ffb900;\n\
-             border-radius: 5px;\n\
-             min-width: 10px;\n\
-             min-height: 10px;\n\
-         }\n\
-         .status-circle-err {\n\
-             background-color: #ED5F5D;\n\
-             border-radius: 5px;\n\
-             min-width: 10px;\n\
-             min-height: 10px;\n\
-         }\n\
-         .accent-btn {\n\
-             background-color: #027ad7;\n\
-             color: #ffffff;\n\
-             font-weight: bold;\n\
-             border: none;\n\
-             padding: 4px 10px;\n\
-             border-radius: 2px;\n\
-             font-size: 9px;\n\
-         }\n\
-         .accent-btn:hover {\n\
-             background-color: #1a8fe5;\n\
-         }\n\
-         .secondary-btn {\n\
-             background-color: #1a1e32;\n\
-             color: #ffffff;\n\
-             border: 1px solid #262c45;\n\
-             border-radius: 2px;\n\
-             font-size: 9px;\n\
-             font-weight: bold;\n\
-             padding: 5px 8px;\n\
-         }\n\
-         .secondary-btn:hover {\n\
-             background-color: #222842;\n\
-         }\n\
-         .topic-item-btn {\n\
-             background: transparent;\n\
-             border: none;\n\
-             border-radius: 0;\n\
-             padding: 7px 10px;\n\
-             color: #d8dee9;\n\
-             font-size: 10px;\n\
-         }\n\
-         .topic-item-btn:hover {\n\
-             background-color: #1c2035;\n\
-             color: #ffffff;\n\
-         }\n\
-         .topic-item-active {\n\
-             background-color: #132238;\n\
-             color: #027ad7;\n\
-             border-left: 3px solid #027ad7;\n\
-             font-weight: bold;\n\
-         }\n\
-         scale highlight {\n\
-             background-color: #027ad7;\n\
-         }\n\
-         scale slider {\n\
-             background-color: #ffffff;\n\
-             min-width: 16px;\n\
-             min-height: 16px;\n\
-         }\n\
-         scale trough {\n\
-             background-color: #101321;\n\
-             border: 1px solid #232840;\n\
-             min-height: 6px;\n\
-         }\n"
+        r#"
+         window {
+             background-color: #0e1019;
+         }
+         headerbar {
+             background-color: #0e1019;
+             border-bottom: 1px solid #181c2e;
+             color: #ffffff;
+             min-height: 38px;
+         }
+         headerbar .title {
+             font-weight: bold;
+             font-size: 12px;
+             color: #ffffff;
+         }
+         .sidebar-bg {
+             background-color: #0e1019;
+             border-right: 1px solid #181c2e;
+         }
+         .nav-btn {
+             background-color: transparent;
+             border: none;
+             border-radius: 0;
+             min-width: 48px;
+             min-height: 44px;
+             padding: 0;
+         }
+         .nav-btn:hover {
+             background-color: #161b2c;
+         }
+         .nav-btn-active {
+             background-color: #132238;
+             border-left: 3px solid #027ad7;
+         }
+         .card-panel {
+             background-color: #151829;
+             border: 1px solid #232840;
+             border-radius: 0;
+             padding: 0;
+         }
+         .card-title {
+             font-size: 11px;
+             font-weight: bold;
+             color: #ffffff;
+         }
+         .field-title {
+             font-size: 10px;
+             font-weight: bold;
+             color: #ffffff;
+         }
+         .badge-connected {
+             background-color: #101321;
+             color: #8ce10b;
+             border: 1px solid #8ce10b;
+             font-weight: bold;
+             font-size: 11px;
+             padding: 5px 6px;
+         }
+         .badge-warning {
+             background-color: #101321;
+             color: #ffb900;
+             border: 1px solid #ffb900;
+             font-weight: bold;
+             font-size: 11px;
+             padding: 5px 6px;
+         }
+         .badge-disconnected {
+             background-color: #101321;
+             color: #7e88a0;
+             border: 1px solid #232840;
+             font-weight: bold;
+             font-size: 11px;
+             padding: 5px 6px;
+         }
+         .status-circle-ok {
+             background-color: #8ce10b;
+             border-radius: 5px;
+             min-width: 10px;
+             min-height: 10px;
+         }
+         .status-circle-warn {
+             background-color: #ffb900;
+             border-radius: 5px;
+             min-width: 10px;
+             min-height: 10px;
+         }
+         .status-circle-err {
+             background-color: #ED5F5D;
+             border-radius: 5px;
+             min-width: 10px;
+             min-height: 10px;
+         }
+         .accent-btn {
+             background-color: #027ad7;
+             color: #ffffff;
+             font-weight: bold;
+             border: none;
+             padding: 4px 10px;
+             border-radius: 2px;
+             font-size: 9px;
+         }
+         .accent-btn:hover {
+             background-color: #1a8fe5;
+         }
+         .secondary-btn {
+             background-color: #1a1e32;
+             color: #ffffff;
+             border: 1px solid #262c45;
+             border-radius: 2px;
+             font-size: 9px;
+             font-weight: bold;
+             padding: 5px 8px;
+         }
+         .secondary-btn:hover {
+             background-color: #222842;
+         }
+         .destructive-btn {
+             background-color: #ED5F5D;
+             color: #ffffff;
+             font-weight: bold;
+             border: none;
+             padding: 4px 10px;
+             border-radius: 2px;
+             font-size: 9px;
+         }
+         .destructive-btn:hover {
+             background-color: #f17876;
+         }
+         .small-icon-btn {
+             background: transparent;
+             border: none;
+             padding: 2px 4px;
+             border-radius: 2px;
+         }
+         .small-icon-btn:hover {
+             background-color: #222842;
+         }
+         .macro-table-header {
+             font-size: 10px;
+             font-weight: bold;
+             color: #7e88a0;
+             padding: 4px 8px;
+             border-bottom: 1px solid #232840;
+         }
+         .macro-table-row {
+             padding: 4px 8px;
+             font-size: 10px;
+             border-bottom: 1px solid #1a1e30;
+         }
+         .macro-table-row:selected {
+             background-color: #132238;
+             color: #027ad7;
+         }
+         .entry-dark {
+             background-color: #0e1019;
+             color: #ffffff;
+             border: 1px solid #262c45;
+             border-radius: 2px;
+             font-size: 10px;
+             padding: 2px 4px;
+         }
+         .muted-text {
+             font-size: 9px;
+             color: #7e88a0;
+         }
+         .topic-item-btn {
+             background: transparent;
+             border: none;
+             border-radius: 0;
+             padding: 7px 10px;
+             color: #d8dee9;
+             font-size: 10px;
+         }
+         .topic-item-btn:hover {
+             background-color: #1c2035;
+             color: #ffffff;
+         }
+         .topic-item-active {
+             background-color: #132238;
+             color: #027ad7;
+             border-left: 3px solid #027ad7;
+             font-weight: bold;
+         }
+         scale highlight {
+             background-color: #027ad7;
+         }
+         scale slider {
+             background-color: #ffffff;
+             min-width: 16px;
+             min-height: 16px;
+         }
+         scale trough {
+             background-color: #101321;
+             border: 1px solid #232840;
+             min-height: 6px;
+         }
+        "#,
     );
     gtk4::style_context_add_provider_for_display(
         &gtk4::gdk::Display::default().unwrap(),
@@ -228,11 +655,16 @@ fn build_ui(app: &adw::Application) {
         .find(|m| m.id == initial_settings.mode_id)
         .unwrap_or(&LIGHT_MODES[1]);
 
+    let initial_macro_mgr = MacroManager::load();
+    let initial_macro_id = initial_macro_mgr.macros.first().map(|m| m.id);
+
     let state = Rc::new(RefCell::new(AppState {
         settings: initial_settings,
         current_mode: initial_mode,
-        macro_mgr: MacroManager::load(),
-        current_macro: None,
+        macro_mgr: initial_macro_mgr,
+        current_macro_id: initial_macro_id,
+        is_recording: false,
+        record_last_instant: None,
         music_engine: MusicVisualizerEngine::new(),
         current_help_topic: 0,
         is_music_active: false,
@@ -716,6 +1148,7 @@ fn build_ui(app: &adw::Application) {
     card_light_modes.append(&stack_controls);
     stack_right.add_named(&card_light_modes, Some("light"));
 
+
     // =========================================================================
     // VIEW 2: MACRO VIEW
     // =========================================================================
@@ -734,19 +1167,9 @@ fn build_ui(app: &adw::Application) {
 
     let macro_scrolled = ScrolledWindow::new();
     macro_scrolled.set_vexpand(true);
-    let macro_text = TextView::new();
-    macro_text.set_editable(false);
-    macro_text.set_cursor_visible(false);
-
-    let mut macro_summary = String::new();
-    for m in &state.borrow().macro_mgr.macros {
-        macro_summary.push_str(&format!("[ID: {}] {}\n", m.id, m.name));
-    }
-    if macro_summary.is_empty() {
-        macro_summary.push_str("No macros saved yet.");
-    }
-    macro_text.buffer().set_text(&macro_summary);
-    macro_scrolled.set_child(Some(&macro_text));
+    let macro_listbox = ListBox::new();
+    macro_listbox.add_css_class("card-panel");
+    macro_scrolled.set_child(Some(&macro_listbox));
     card_macro_left.append(&macro_scrolled);
     stack_left.add_named(&card_macro_left, Some("macro"));
 
@@ -755,55 +1178,858 @@ fn build_ui(app: &adw::Application) {
     card_macro_right.set_size_request(530, 494);
 
     // Top Card (h=155)
-    let macro_top_card = GtkBox::new(Orientation::Vertical, 8);
+    let macro_top_card = GtkBox::new(Orientation::Horizontal, 0);
     macro_top_card.set_size_request(530, 155);
     macro_top_card.add_css_class("card-panel");
 
-    let macro_toolbar = GtkBox::new(Orientation::Horizontal, 8);
-    macro_toolbar.set_margin_start(16);
-    macro_toolbar.set_margin_end(16);
-    macro_toolbar.set_margin_top(10);
+    // Left half: 3x2 Grid of action buttons
+    let grid_actions = Grid::new();
+    grid_actions.set_row_spacing(6);
+    grid_actions.set_column_spacing(6);
+    grid_actions.set_margin_start(16);
+    grid_actions.set_margin_end(12);
+    grid_actions.set_margin_top(14);
+    grid_actions.set_margin_bottom(14);
 
     let btn_macro_new = Button::with_label(t(&cur_lang, "btn_new"));
     btn_macro_new.add_css_class("secondary-btn");
+    btn_macro_new.set_size_request(86, 28);
     let btn_macro_del = Button::with_label(t(&cur_lang, "btn_delete"));
     btn_macro_del.add_css_class("secondary-btn");
+    btn_macro_del.set_size_request(86, 28);
     let btn_macro_copy = Button::with_label(t(&cur_lang, "btn_copy"));
     btn_macro_copy.add_css_class("secondary-btn");
-    let btn_macro_play = Button::with_label("▶ Play");
-    btn_macro_play.add_css_class("accent-btn");
+    btn_macro_copy.set_size_request(86, 28);
+    let btn_macro_rename = Button::with_label(t(&cur_lang, "btn_rename"));
+    btn_macro_rename.add_css_class("secondary-btn");
+    btn_macro_rename.set_size_request(86, 28);
+    let btn_macro_import = Button::with_label(t(&cur_lang, "btn_import"));
+    btn_macro_import.add_css_class("secondary-btn");
+    btn_macro_import.set_size_request(86, 28);
+    let btn_macro_export = Button::with_label(t(&cur_lang, "btn_export"));
+    btn_macro_export.add_css_class("secondary-btn");
+    btn_macro_export.set_size_request(86, 28);
 
-    macro_toolbar.append(&btn_macro_new);
-    macro_toolbar.append(&btn_macro_del);
-    macro_toolbar.append(&btn_macro_copy);
-    macro_toolbar.append(&btn_macro_play);
-    macro_top_card.append(&macro_toolbar);
+    grid_actions.attach(&btn_macro_new, 0, 0, 1, 1);
+    grid_actions.attach(&btn_macro_del, 1, 0, 1, 1);
+    grid_actions.attach(&btn_macro_copy, 0, 1, 1, 1);
+    grid_actions.attach(&btn_macro_rename, 1, 1, 1, 1);
+    grid_actions.attach(&btn_macro_import, 0, 2, 1, 1);
+    grid_actions.attach(&btn_macro_export, 1, 2, 1, 1);
+    macro_top_card.append(&grid_actions);
+
+    let sep_top_mid = Separator::new(Orientation::Vertical);
+    sep_top_mid.set_margin_top(8);
+    sep_top_mid.set_margin_bottom(8);
+    macro_top_card.append(&sep_top_mid);
+
+    // Right half: Repeat Time and Delay Mode
+    let settings_box = GtkBox::new(Orientation::Vertical, 8);
+    settings_box.set_hexpand(true);
+    settings_box.set_margin_start(16);
+    settings_box.set_margin_end(16);
+    settings_box.set_margin_top(14);
+    settings_box.set_margin_bottom(14);
+
+    let row_rep = GtkBox::new(Orientation::Horizontal, 8);
+    let lbl_rep = Label::new(Some(t(&cur_lang, "repeat_time")));
+    lbl_rep.add_css_class("field-title");
+    let entry_repeat = Entry::new();
+    entry_repeat.set_text("1");
+    entry_repeat.set_width_chars(5);
+    entry_repeat.add_css_class("entry-dark");
+    let lbl_rep_unit = Label::new(Some("(1 - 9999)"));
+    lbl_rep_unit.add_css_class("muted-text");
+    row_rep.append(&lbl_rep);
+    row_rep.append(&entry_repeat);
+    row_rep.append(&lbl_rep_unit);
+    settings_box.append(&row_rep);
+
+    let delay_box = GtkBox::new(Orientation::Vertical, 4);
+    let lbl_delay_title = Label::new(Some(t(&cur_lang, "delay_mode")));
+    lbl_delay_title.add_css_class("field-title");
+    lbl_delay_title.set_halign(Align::Start);
+    delay_box.append(&lbl_delay_title);
+
+    let rb_delay_record = CheckButton::with_label(t(&cur_lang, "delay_record"));
+    let rb_delay_none = CheckButton::with_label(t(&cur_lang, "delay_none"));
+    rb_delay_none.set_group(Some(&rb_delay_record));
+
+    let row_def = GtkBox::new(Orientation::Horizontal, 6);
+    let rb_delay_default = CheckButton::with_label(t(&cur_lang, "delay_default"));
+    rb_delay_default.set_group(Some(&rb_delay_record));
+    rb_delay_default.set_active(true);
+    let entry_default_delay = Entry::new();
+    entry_default_delay.set_text("10");
+    entry_default_delay.set_width_chars(4);
+    entry_default_delay.add_css_class("entry-dark");
+    let lbl_ms = Label::new(Some(t(&cur_lang, "delay_ms")));
+    lbl_ms.add_css_class("field-title");
+    row_def.append(&rb_delay_default);
+    row_def.append(&entry_default_delay);
+    row_def.append(&lbl_ms);
+
+    delay_box.append(&rb_delay_record);
+    delay_box.append(&rb_delay_none);
+    delay_box.append(&row_def);
+    settings_box.append(&delay_box);
+
+    macro_top_card.append(&settings_box);
     card_macro_right.append(&macro_top_card);
 
     // Bottom Card (h=331)
-    let macro_bottom_card = GtkBox::new(Orientation::Vertical, 0);
+    let macro_bottom_card = GtkBox::new(Orientation::Vertical, 6);
     macro_bottom_card.set_size_request(530, 331);
     macro_bottom_card.add_css_class("card-panel");
 
-    let macro_detail_scrolled = ScrolledWindow::new();
-    macro_detail_scrolled.set_vexpand(true);
-    let macro_detail_text = TextView::new();
-    macro_detail_text.set_editable(false);
-    macro_detail_text.buffer().set_text("Select a macro from the left list to view keystrokes and timing.\nPress 'Play' to execute virtual keystrokes via Linux /dev/uinput.");
-    macro_detail_scrolled.set_child(Some(&macro_detail_text));
-    macro_bottom_card.append(&macro_detail_scrolled);
-    card_macro_right.append(&macro_bottom_card);
+    let hdr_row = GtkBox::new(Orientation::Horizontal, 8);
+    hdr_row.set_margin_start(16);
+    hdr_row.set_margin_end(16);
+    hdr_row.set_margin_top(8);
+    let lbl_rec_title = Label::new(Some(t(&cur_lang, "macro_record")));
+    lbl_rec_title.add_css_class("card-title");
+    lbl_rec_title.set_hexpand(true);
+    lbl_rec_title.set_halign(Align::Start);
+    hdr_row.append(&lbl_rec_title);
 
-    let state_play = state.clone();
-    btn_macro_play.connect_clicked(move |_| {
-        if let Some(m) = state_play.borrow().macro_mgr.macros.first() {
-            if let Ok(player) = UinputPlayer::new() {
-                player.play(m);
+    let btns_sub = GtkBox::new(Orientation::Horizontal, 4);
+    let btn_action_del = Button::new();
+    if let Some(p) = get_asset_path("assets/icon/record_del.png") {
+        let pic = Picture::for_filename(p);
+        pic.set_size_request(20, 20);
+        btn_action_del.set_child(Some(&pic));
+    } else {
+        btn_action_del.set_label("✕");
+    }
+    btn_action_del.add_css_class("small-icon-btn");
+    btn_action_del.set_tooltip_text(Some("Delete Action"));
+
+    let btn_action_up = Button::new();
+    if let Some(p) = get_asset_path("assets/icon/record_up.png") {
+        let pic = Picture::for_filename(p);
+        pic.set_size_request(20, 20);
+        btn_action_up.set_child(Some(&pic));
+    } else {
+        btn_action_up.set_label("▲");
+    }
+    btn_action_up.add_css_class("small-icon-btn");
+    btn_action_up.set_tooltip_text(Some("Move Up"));
+
+    let btn_action_down = Button::new();
+    if let Some(p) = get_asset_path("assets/icon/record_down.png") {
+        let pic = Picture::for_filename(p);
+        pic.set_size_request(20, 20);
+        btn_action_down.set_child(Some(&pic));
+    } else {
+        btn_action_down.set_label("▼");
+    }
+    btn_action_down.add_css_class("small-icon-btn");
+    btn_action_down.set_tooltip_text(Some("Move Down"));
+
+    btns_sub.append(&btn_action_del);
+    btns_sub.append(&btn_action_up);
+    btns_sub.append(&btn_action_down);
+    hdr_row.append(&btns_sub);
+    macro_bottom_card.append(&hdr_row);
+
+    // Table Column Headers
+    let tbl_hdr = GtkBox::new(Orientation::Horizontal, 0);
+    tbl_hdr.add_css_class("macro-table-header");
+    tbl_hdr.set_margin_start(16);
+    tbl_hdr.set_margin_end(16);
+    let lbl_th_desc = Label::new(Some(t(&cur_lang, "col_desc")));
+    lbl_th_desc.set_hexpand(true);
+    lbl_th_desc.set_halign(Align::Start);
+    lbl_th_desc.set_margin_start(8);
+    let lbl_th_act = Label::new(Some(t(&cur_lang, "col_action")));
+    lbl_th_act.set_width_request(100);
+    lbl_th_act.set_halign(Align::Center);
+    let lbl_th_del = Label::new(Some(t(&cur_lang, "col_delay")));
+    lbl_th_del.set_width_request(100);
+    lbl_th_del.set_halign(Align::Center);
+    tbl_hdr.append(&lbl_th_desc);
+    tbl_hdr.append(&lbl_th_act);
+    tbl_hdr.append(&lbl_th_del);
+    macro_bottom_card.append(&tbl_hdr);
+
+    // Scrolled Table
+    let act_scrolled = ScrolledWindow::new();
+    act_scrolled.set_vexpand(true);
+    act_scrolled.set_margin_start(16);
+    act_scrolled.set_margin_end(16);
+    let action_listbox = ListBox::new();
+    action_listbox.add_css_class("card-panel");
+    act_scrolled.set_child(Some(&action_listbox));
+    macro_bottom_card.append(&act_scrolled);
+
+    // Bottom Controls Row
+    let bot_row = GtkBox::new(Orientation::Horizontal, 8);
+    bot_row.set_margin_start(16);
+    bot_row.set_margin_end(16);
+    bot_row.set_margin_top(4);
+    bot_row.set_margin_bottom(8);
+
+    let lbl_record_hint = Label::new(Some("Ready"));
+    lbl_record_hint.set_wrap(true);
+    lbl_record_hint.set_hexpand(true);
+    lbl_record_hint.set_halign(Align::Start);
+    lbl_record_hint.add_css_class("muted-text");
+    bot_row.append(&lbl_record_hint);
+
+    let btn_macro_record = Button::with_label(t(&cur_lang, "btn_record"));
+    btn_macro_record.add_css_class("secondary-btn");
+    btn_macro_record.set_size_request(80, 28);
+
+    let btn_macro_play = Button::with_label(t(&cur_lang, "btn_play"));
+    btn_macro_play.add_css_class("secondary-btn");
+    btn_macro_play.set_size_request(80, 28);
+
+    let btn_macro_save = Button::with_label(t(&cur_lang, "btn_save"));
+    btn_macro_save.add_css_class("accent-btn");
+    btn_macro_save.set_size_request(80, 28);
+
+    bot_row.append(&btn_macro_record);
+    bot_row.append(&btn_macro_play);
+    bot_row.append(&btn_macro_save);
+    macro_bottom_card.append(&bot_row);
+
+    card_macro_right.append(&macro_bottom_card);
+    stack_right.add_named(&card_macro_right, Some("macro"));
+
+    // Populate initial macro list and table
+    let init_mid = state.borrow().current_macro_id;
+    let init_macros = state.borrow().macro_mgr.macros.clone();
+    populate_macro_list(&macro_listbox, &init_macros, init_mid);
+    if let Some(mid) = init_mid {
+        if let Some(m) = state.borrow().macro_mgr.get_macro(mid) {
+            entry_repeat.set_text(&m.repeat_time.to_string());
+            entry_default_delay.set_text(&m.default_delay.to_string());
+            match m.delay_type {
+                DELAY_RECORD => rb_delay_record.set_active(true),
+                DELAY_NONE => rb_delay_none.set_active(true),
+                _ => rb_delay_default.set_active(true),
+            }
+            populate_action_table(&action_listbox, &m.actions, &cur_lang);
+        }
+    }
+
+    // Macro list selection handler
+    let state_msel = state.clone();
+    let entry_rep_msel = entry_repeat.clone();
+    let entry_def_msel = entry_default_delay.clone();
+    let rb_dr_msel = rb_delay_record.clone();
+    let rb_dn_msel = rb_delay_none.clone();
+    let rb_dd_msel = rb_delay_default.clone();
+    let act_lb_msel = action_listbox.clone();
+    let btn_del_msel = btn_macro_del.clone();
+    let btn_cp_msel = btn_macro_copy.clone();
+    let btn_ren_msel = btn_macro_rename.clone();
+    let btn_exp_msel = btn_macro_export.clone();
+    macro_listbox.connect_row_selected(move |_, row_opt| {
+        if let Some(row) = row_opt {
+            let idx = row.index() as usize;
+            let mut st = state_msel.borrow_mut();
+            let macro_opt = st.macro_mgr.macros.get(idx).cloned();
+            if let Some(m) = macro_opt {
+                let mid = m.id;
+                st.current_macro_id = Some(mid);
+                entry_rep_msel.set_text(&m.repeat_time.to_string());
+                entry_def_msel.set_text(&m.default_delay.to_string());
+                match m.delay_type {
+                    DELAY_RECORD => rb_dr_msel.set_active(true),
+                    DELAY_NONE => rb_dn_msel.set_active(true),
+                    _ => rb_dd_msel.set_active(true),
+                }
+                populate_action_table(&act_lb_msel, &m.actions, &st.settings.language);
+                btn_del_msel.set_sensitive(true);
+                btn_cp_msel.set_sensitive(true);
+                btn_ren_msel.set_sensitive(true);
+                btn_exp_msel.set_sensitive(true);
+            }
+        } else {
+            btn_del_msel.set_sensitive(false);
+            btn_cp_msel.set_sensitive(false);
+            btn_ren_msel.set_sensitive(false);
+            btn_exp_msel.set_sensitive(false);
+        }
+    });
+
+    // Action Table Double-Click Delay Editing
+    let win_edit_act = window.clone();
+    let state_edit_act = state.clone();
+    let act_lb_edit_act = action_listbox.clone();
+    action_listbox.connect_row_activated(move |_, row| {
+        let idx = row.index() as usize;
+        let st = state_edit_act.borrow();
+        if let Some(cur_id) = st.current_macro_id {
+            if let Some(m) = st.macro_mgr.get_macro(cur_id) {
+                if let Some(act) = m.actions.get(idx) {
+                    let desc = act.desc.clone();
+                    let cur_delay = act.delay_ms.to_string();
+                    let st_inner = state_edit_act.clone();
+                    let alb_inner = act_lb_edit_act.clone();
+                    show_input_dialog(
+                        &win_edit_act,
+                        "Edit Delay",
+                        &format!("Enter delay (ms) for {}:", desc),
+                        &cur_delay,
+                        move |val| {
+                            if let Ok(d) = val.trim().parse::<u32>() {
+                                let mut stm = st_inner.borrow_mut();
+                                stm.macro_mgr.update_action_delay(cur_id, idx, d);
+                                if let Some(m_updated) = stm.macro_mgr.get_macro(cur_id) {
+                                    let actions = m_updated.actions.clone();
+                                    let lang = stm.settings.language.clone();
+                                    drop(stm);
+                                    populate_action_table(&alb_inner, &actions, &lang);
+                                    if let Some(r) = alb_inner.row_at_index(idx as i32) {
+                                        alb_inner.select_row(Some(&r));
+                                    }
+                                }
+                            }
+                        },
+                    );
+                }
             }
         }
     });
 
-    stack_right.add_named(&card_macro_right, Some("macro"));
+    // Action Buttons: Delete, Move Up, Move Down
+    let state_adel = state.clone();
+    let act_lb_adel = action_listbox.clone();
+    btn_action_del.connect_clicked(move |_| {
+        let mut st = state_adel.borrow_mut();
+        if let Some(cur_id) = st.current_macro_id {
+            if let Some(row) = act_lb_adel.selected_row() {
+                let idx = row.index() as usize;
+                st.macro_mgr.delete_action(cur_id, idx);
+                if let Some(m) = st.macro_mgr.get_macro(cur_id) {
+                    let actions = m.actions.clone();
+                    let lang = st.settings.language.clone();
+                    drop(st);
+                    populate_action_table(&act_lb_adel, &actions, &lang);
+                    let new_idx = idx.min(actions.len().saturating_sub(1));
+                    if let Some(new_r) = act_lb_adel.row_at_index(new_idx as i32) {
+                        act_lb_adel.select_row(Some(&new_r));
+                    }
+                }
+            }
+        }
+    });
+
+    let state_aup = state.clone();
+    let act_lb_aup = action_listbox.clone();
+    btn_action_up.connect_clicked(move |_| {
+        let mut st = state_aup.borrow_mut();
+        if let Some(cur_id) = st.current_macro_id {
+            if let Some(row) = act_lb_aup.selected_row() {
+                let idx = row.index() as usize;
+                if idx > 0 {
+                    st.macro_mgr.reorder_action(cur_id, idx, idx - 1);
+                    if let Some(m) = st.macro_mgr.get_macro(cur_id) {
+                        let actions = m.actions.clone();
+                        let lang = st.settings.language.clone();
+                        drop(st);
+                        populate_action_table(&act_lb_aup, &actions, &lang);
+                        if let Some(new_r) = act_lb_aup.row_at_index((idx - 1) as i32) {
+                            act_lb_aup.select_row(Some(&new_r));
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    let state_adown = state.clone();
+    let act_lb_adown = action_listbox.clone();
+    btn_action_down.connect_clicked(move |_| {
+        let mut st = state_adown.borrow_mut();
+        if let Some(cur_id) = st.current_macro_id {
+            if let Some(row) = act_lb_adown.selected_row() {
+                let idx = row.index() as usize;
+                if let Some(m) = st.macro_mgr.get_macro(cur_id) {
+                    if idx + 1 < m.actions.len() {
+                        st.macro_mgr.reorder_action(cur_id, idx, idx + 1);
+                        let actions = st.macro_mgr.get_macro(cur_id).unwrap().actions.clone();
+                        let lang = st.settings.language.clone();
+                        drop(st);
+                        populate_action_table(&act_lb_adown, &actions, &lang);
+                        if let Some(new_r) = act_lb_adown.row_at_index((idx + 1) as i32) {
+                            act_lb_adown.select_row(Some(&new_r));
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Top Macro Management Buttons: New, Delete, Copy, Rename, Import, Export
+    let state_mnew = state.clone();
+    let m_lb_new = macro_listbox.clone();
+    let act_lb_new = action_listbox.clone();
+    let cur_lang_new = cur_lang.clone();
+    btn_macro_new.connect_clicked(move |_| {
+        let mut st = state_mnew.borrow_mut();
+        let next_id = st.macro_mgr.macros.iter().map(|m| m.id).max().unwrap_or(0) + 1;
+        let name = format!("Macro {}", next_id);
+        let new_m = st.macro_mgr.add_macro(&name);
+        let mid = new_m.id;
+        st.current_macro_id = Some(mid);
+        let macros = st.macro_mgr.macros.clone();
+        drop(st);
+        populate_macro_list(&m_lb_new, &macros, Some(mid));
+        populate_action_table(&act_lb_new, &[], &cur_lang_new);
+    });
+
+    let win_del = window.clone();
+    let state_mdel = state.clone();
+    let m_lb_del = macro_listbox.clone();
+    let act_lb_del_ref = action_listbox.clone();
+    let cur_lang_mdel = cur_lang.clone();
+    btn_macro_del.connect_clicked(move |_| {
+        let st = state_mdel.borrow();
+        if let Some(cur_id) = st.current_macro_id {
+            if let Some(m) = st.macro_mgr.get_macro(cur_id) {
+                let mname = m.name.clone();
+                let st_inner = state_mdel.clone();
+                let mlb_inner = m_lb_del.clone();
+                let alb_inner = act_lb_del_ref.clone();
+                let lang_inner = cur_lang_mdel.clone();
+                show_confirm_dialog(
+                    &win_del,
+                    "Delete Macro",
+                    &format!("Are you sure you want to delete '{}'?", mname),
+                    move || {
+                        let mut stm = st_inner.borrow_mut();
+                        stm.macro_mgr.delete_macro(cur_id);
+                        stm.current_macro_id = stm.macro_mgr.macros.first().map(|m| m.id);
+                        let new_sel = stm.current_macro_id;
+                        let macros = stm.macro_mgr.macros.clone();
+                        let actions = stm.macro_mgr.macros.first().map(|m| m.actions.clone()).unwrap_or_default();
+                        drop(stm);
+                        populate_macro_list(&mlb_inner, &macros, new_sel);
+                        populate_action_table(&alb_inner, &actions, &lang_inner);
+                    },
+                );
+            }
+        }
+    });
+
+    let state_mcopy = state.clone();
+    let m_lb_cp = macro_listbox.clone();
+    let act_lb_cp = action_listbox.clone();
+    let cur_lang_cp = cur_lang.clone();
+    btn_macro_copy.connect_clicked(move |_| {
+        let mut st = state_mcopy.borrow_mut();
+        if let Some(cur_id) = st.current_macro_id {
+            if let Some(new_id) = st.macro_mgr.copy_macro(cur_id) {
+                st.current_macro_id = Some(new_id);
+                let macros = st.macro_mgr.macros.clone();
+                let actions = st.macro_mgr.get_macro(new_id).map(|m| m.actions.clone()).unwrap_or_default();
+                drop(st);
+                populate_macro_list(&m_lb_cp, &macros, Some(new_id));
+                populate_action_table(&act_lb_cp, &actions, &cur_lang_cp);
+            }
+        }
+    });
+
+    let win_ren = window.clone();
+    let state_mren = state.clone();
+    let m_lb_ren = macro_listbox.clone();
+    btn_macro_rename.connect_clicked(move |_| {
+        let st = state_mren.borrow();
+        if let Some(cur_id) = st.current_macro_id {
+            if let Some(m) = st.macro_mgr.get_macro(cur_id) {
+                let mname = m.name.clone();
+                let st_inner = state_mren.clone();
+                let mlb_inner = m_lb_ren.clone();
+                show_input_dialog(
+                    &win_ren,
+                    "Rename Macro",
+                    "Enter new name:",
+                    &mname,
+                    move |new_name| {
+                        if !new_name.trim().is_empty() {
+                            let mut stm = st_inner.borrow_mut();
+                            stm.macro_mgr.rename_macro(cur_id, new_name.trim());
+                            let macros = stm.macro_mgr.macros.clone();
+                            drop(stm);
+                            populate_macro_list(&mlb_inner, &macros, Some(cur_id));
+                        }
+                    },
+                );
+            }
+        }
+    });
+
+    let win_imp = window.clone();
+    let state_mimp = state.clone();
+    let m_lb_imp = macro_listbox.clone();
+    let act_lb_imp = action_listbox.clone();
+    let cur_lang_imp = cur_lang.clone();
+    let lbl_hint_imp = lbl_record_hint.clone();
+    btn_macro_import.connect_clicked(move |_| {
+        let chooser = FileChooserNative::new(
+            Some("Import Macro JSON"),
+            Some(&win_imp),
+            FileChooserAction::Open,
+            Some("Import"),
+            Some("Cancel"),
+        );
+        let filter = gtk4::FileFilter::new();
+        filter.set_name(Some("JSON Files (*.json)"));
+        filter.add_pattern("*.json");
+        chooser.add_filter(&filter);
+
+        let st_inner = state_mimp.clone();
+        let mlb_inner = m_lb_imp.clone();
+        let alb_inner = act_lb_imp.clone();
+        let lang_inner = cur_lang_imp.clone();
+        let hint_inner = lbl_hint_imp.clone();
+        chooser.connect_response(move |d, resp| {
+            if resp == gtk4::ResponseType::Accept {
+                if let Some(file) = d.file() {
+                    if let Some(path) = file.path() {
+                        let mut stm = st_inner.borrow_mut();
+                        match stm.macro_mgr.import_macro(&path) {
+                            Ok(new_id) => {
+                                stm.current_macro_id = Some(new_id);
+                                let macros = stm.macro_mgr.macros.clone();
+                                let actions = stm.macro_mgr.get_macro(new_id).map(|m| m.actions.clone()).unwrap_or_default();
+                                let name = stm.macro_mgr.get_macro(new_id).map(|m| m.name.clone()).unwrap_or_default();
+                                drop(stm);
+                                populate_macro_list(&mlb_inner, &macros, Some(new_id));
+                                populate_action_table(&alb_inner, &actions, &lang_inner);
+                                hint_inner.set_text(&format!("Imported '{}'.", name));
+                            }
+                            Err(e) => {
+                                hint_inner.set_text(&format!("Import failed: {}", e));
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        chooser.show();
+    });
+
+    let win_exp = window.clone();
+    let state_mexp = state.clone();
+    let lbl_hint_exp = lbl_record_hint.clone();
+    btn_macro_export.connect_clicked(move |_| {
+        let st = state_mexp.borrow();
+        if let Some(cur_id) = st.current_macro_id {
+            if let Some(m) = st.macro_mgr.get_macro(cur_id) {
+                let mname = m.name.clone();
+                drop(st);
+
+                let chooser = FileChooserNative::new(
+                    Some("Export Macro JSON"),
+                    Some(&win_exp),
+                    FileChooserAction::Save,
+                    Some("Export"),
+                    Some("Cancel"),
+                );
+                chooser.set_current_name(&format!("{}.json", mname));
+                let filter = gtk4::FileFilter::new();
+                filter.set_name(Some("JSON Files (*.json)"));
+                filter.add_pattern("*.json");
+                chooser.add_filter(&filter);
+
+                let st_inner = state_mexp.clone();
+                let hint_inner = lbl_hint_exp.clone();
+                chooser.connect_response(move |d, resp| {
+                    if resp == gtk4::ResponseType::Accept {
+                        if let Some(file) = d.file() {
+                            if let Some(path) = file.path() {
+                                let stm = st_inner.borrow();
+                                match stm.macro_mgr.export_macro(cur_id, &path) {
+                                    Ok(()) => {
+                                        hint_inner.set_text(&format!("Exported to '{}'.", path.display()));
+                                    }
+                                    Err(e) => {
+                                        hint_inner.set_text(&format!("Export failed: {}", e));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                chooser.show();
+            }
+        }
+    });
+
+    // Repeat Time and Delay Mode editing callbacks
+    let state_rep = state.clone();
+    entry_repeat.connect_changed(move |entry| {
+        if let Ok(rep) = entry.text().trim().parse::<u32>() {
+            let mut st = state_rep.borrow_mut();
+            if let Some(cur_id) = st.current_macro_id {
+                if let Some(m) = st.macro_mgr.get_macro_mut(cur_id) {
+                    m.repeat_time = rep.max(1);
+                }
+            }
+        }
+    });
+
+    let state_defd = state.clone();
+    let act_lb_defd = action_listbox.clone();
+    entry_default_delay.connect_changed(move |entry| {
+        if let Ok(def_d) = entry.text().trim().parse::<u32>() {
+            let mut st = state_defd.borrow_mut();
+            if let Some(cur_id) = st.current_macro_id {
+                let is_default_mode = st.macro_mgr.get_macro(cur_id).map(|m| m.delay_type == DELAY_DEFAULT).unwrap_or(false);
+                if let Some(m) = st.macro_mgr.get_macro_mut(cur_id) {
+                    m.default_delay = def_d;
+                    if is_default_mode {
+                        for a in &mut m.actions {
+                            a.delay_ms = def_d;
+                        }
+                    }
+                }
+                if is_default_mode {
+                    let actions = st.macro_mgr.get_macro(cur_id).unwrap().actions.clone();
+                    let lang = st.settings.language.clone();
+                    drop(st);
+                    populate_action_table(&act_lb_defd, &actions, &lang);
+                }
+            }
+        }
+    });
+
+    let state_rb = state.clone();
+    let act_lb_rb = action_listbox.clone();
+    let entry_def_rb = entry_default_delay.clone();
+    let rb_dr_cb = rb_delay_record.clone();
+    let rb_dn_cb = rb_delay_none.clone();
+
+    let on_delay_toggled = Rc::new(move || {
+        let mut st = state_rb.borrow_mut();
+        if let Some(cur_id) = st.current_macro_id {
+            let mode = if rb_dr_cb.is_active() {
+                DELAY_RECORD
+            } else if rb_dn_cb.is_active() {
+                DELAY_NONE
+            } else {
+                DELAY_DEFAULT
+            };
+            let def_d = entry_def_rb.text().trim().parse::<u32>().unwrap_or(10);
+            if let Some(m) = st.macro_mgr.get_macro_mut(cur_id) {
+                m.delay_type = mode;
+                if mode == DELAY_NONE {
+                    for a in &mut m.actions {
+                        a.delay_ms = 0;
+                    }
+                } else if mode == DELAY_DEFAULT {
+                    for a in &mut m.actions {
+                        a.delay_ms = def_d;
+                    }
+                }
+            }
+            if mode != DELAY_RECORD {
+                let actions = st.macro_mgr.get_macro(cur_id).unwrap().actions.clone();
+                let lang = st.settings.language.clone();
+                drop(st);
+                populate_action_table(&act_lb_rb, &actions, &lang);
+            }
+        }
+    });
+
+    let odt1 = on_delay_toggled.clone();
+    rb_delay_record.connect_toggled(move |_| odt1());
+    let odt2 = on_delay_toggled.clone();
+    rb_delay_none.connect_toggled(move |_| odt2());
+    let odt3 = on_delay_toggled.clone();
+    rb_delay_default.connect_toggled(move |_| odt3());
+
+    // Record / Play / Save callbacks
+    let state_rec = state.clone();
+    let btn_rec_ref = btn_macro_record.clone();
+    let lbl_hint_rec = lbl_record_hint.clone();
+    let cur_lang_rec = cur_lang.clone();
+    btn_macro_record.connect_clicked(move |_| {
+        let mut st = state_rec.borrow_mut();
+        st.is_recording = !st.is_recording;
+        if st.is_recording {
+            st.record_last_instant = None;
+            btn_rec_ref.set_label(t(&cur_lang_rec, "btn_stop"));
+            btn_rec_ref.remove_css_class("secondary-btn");
+            btn_rec_ref.add_css_class("destructive-btn");
+            lbl_hint_rec.set_text(t(&cur_lang_rec, "hint_recording"));
+        } else {
+            btn_rec_ref.set_label(t(&cur_lang_rec, "btn_record"));
+            btn_rec_ref.remove_css_class("destructive-btn");
+            btn_rec_ref.add_css_class("secondary-btn");
+            let count = st.current_macro_id
+                .and_then(|id| st.macro_mgr.get_macro(id))
+                .map(|m| m.actions.len())
+                .unwrap_or(0);
+            lbl_hint_rec.set_text(&format!("Recorded {} actions.", count));
+        }
+    });
+
+    let state_play = state.clone();
+    let btn_play_ref = btn_macro_play.clone();
+    let lbl_hint_play = lbl_record_hint.clone();
+    btn_macro_play.connect_clicked(move |_| {
+        let st = state_play.borrow();
+        let cur_id = match st.current_macro_id {
+            Some(id) => id,
+            None => return,
+        };
+        let macro_opt = st.macro_mgr.get_macro(cur_id).cloned();
+        drop(st);
+
+        if let Some(m) = macro_opt {
+            if m.actions.is_empty() {
+                lbl_hint_play.set_text("Macro has no actions.");
+                return;
+            }
+            if !UinputPlayer::is_available() {
+                lbl_hint_play.set_text("Virtual keyboard unavailable (/dev/uinput). Run 'setup-udev'.");
+                return;
+            }
+
+            let btn_done = btn_play_ref.clone();
+            let hint_done = lbl_hint_play.clone();
+            let macro_name = m.name.clone();
+
+            btn_play_ref.set_sensitive(false);
+            lbl_hint_play.set_text(&format!("Playing '{}'...", macro_name));
+
+            glib::spawn_future_local(async move {
+                let _ = gio::spawn_blocking(move || {
+                    if let Ok(player) = UinputPlayer::new() {
+                        player.play(&m);
+                    }
+                }).await;
+                btn_done.set_sensitive(true);
+                hint_done.set_text(&format!("Completed playback of '{}'.", macro_name));
+            });
+        }
+    });
+
+    let state_save = state.clone();
+    let entry_rep_save = entry_repeat.clone();
+    let entry_def_save = entry_default_delay.clone();
+    let rb_dr_save = rb_delay_record.clone();
+    let rb_dn_save = rb_delay_none.clone();
+    let lbl_hint_save = lbl_record_hint.clone();
+    btn_macro_save.connect_clicked(move |_| {
+        let mut st = state_save.borrow_mut();
+        if let Some(cur_id) = st.current_macro_id {
+            let mut saved_name = None;
+            if let Some(m) = st.macro_mgr.get_macro_mut(cur_id) {
+                if let Ok(rep) = entry_rep_save.text().trim().parse::<u32>() {
+                    m.repeat_time = rep.max(1);
+                }
+                if let Ok(def_d) = entry_def_save.text().trim().parse::<u32>() {
+                    m.default_delay = def_d;
+                }
+                m.delay_type = if rb_dr_save.is_active() {
+                    DELAY_RECORD
+                } else if rb_dn_save.is_active() {
+                    DELAY_NONE
+                } else {
+                    DELAY_DEFAULT
+                };
+                saved_name = Some(m.name.clone());
+            }
+            if let Some(name) = saved_name {
+                st.macro_mgr.save();
+                lbl_hint_save.set_text(&format!("Macro '{}' saved successfully.", name));
+            }
+        }
+    });
+
+    // Window Key Controller for Recording Actions
+    let key_ctrl = EventControllerKey::new();
+    let state_kpress = state.clone();
+    let act_lb_kpress = action_listbox.clone();
+    let cur_lang_kpress = cur_lang.clone();
+    key_ctrl.connect_key_pressed(move |_ctrl, key, code, _modifiers| {
+        let mut st = state_kpress.borrow_mut();
+        if !st.is_recording {
+            return glib::Propagation::Proceed;
+        }
+        let cur_id = match st.current_macro_id {
+            Some(id) => id,
+            None => return glib::Propagation::Proceed,
+        };
+        let mode = st.macro_mgr.get_macro(cur_id).map(|m| m.delay_type).unwrap_or(DELAY_DEFAULT);
+        let def_d = st.macro_mgr.get_macro(cur_id).map(|m| m.default_delay).unwrap_or(10);
+        let now = Instant::now();
+        let delay = match mode {
+            DELAY_NONE => 0,
+            DELAY_DEFAULT => def_d,
+            _ => {
+                if let Some(last) = st.record_last_instant {
+                    now.duration_since(last).as_millis() as u32
+                } else {
+                    10
+                }
+            }
+        };
+        st.record_last_instant = Some(now);
+
+        let (desc, evcode) = key_to_info(&key, code);
+        let action = MacroAction {
+            desc: desc.clone(),
+            action: "Down".to_string(),
+            delay_ms: delay,
+            keycode: evcode,
+        };
+        st.macro_mgr.add_action(cur_id, action.clone());
+        drop(st);
+
+        let row = create_action_row(&action, &cur_lang_kpress);
+        act_lb_kpress.append(&row);
+        glib::Propagation::Stop
+    });
+
+    let state_krel = state.clone();
+    let act_lb_krel = action_listbox.clone();
+    let cur_lang_krel = cur_lang.clone();
+    key_ctrl.connect_key_released(move |_ctrl, key, code, _modifiers| {
+        let mut st = state_krel.borrow_mut();
+        if !st.is_recording {
+            return;
+        }
+        let cur_id = match st.current_macro_id {
+            Some(id) => id,
+            None => return,
+        };
+        let mode = st.macro_mgr.get_macro(cur_id).map(|m| m.delay_type).unwrap_or(DELAY_DEFAULT);
+        let def_d = st.macro_mgr.get_macro(cur_id).map(|m| m.default_delay).unwrap_or(10);
+        let now = Instant::now();
+        let delay = match mode {
+            DELAY_NONE => 0,
+            DELAY_DEFAULT => def_d,
+            _ => {
+                if let Some(last) = st.record_last_instant {
+                    now.duration_since(last).as_millis() as u32
+                } else {
+                    10
+                }
+            }
+        };
+        st.record_last_instant = Some(now);
+
+        let (desc, evcode) = key_to_info(&key, code);
+        let action = MacroAction {
+            desc: desc.clone(),
+            action: "Up".to_string(),
+            delay_ms: delay,
+            keycode: evcode,
+        };
+        st.macro_mgr.add_action(cur_id, action.clone());
+        drop(st);
+
+        let row = create_action_row(&action, &cur_lang_krel);
+        act_lb_krel.append(&row);
+    });
+    window.add_controller(key_ctrl);
 
     // =========================================================================
     // VIEW 3: HELP VIEW
@@ -842,6 +2068,7 @@ fn build_ui(app: &adw::Application) {
     let help_text_view = TextView::new();
     help_text_view.set_editable(false);
     help_text_view.set_wrap_mode(WrapMode::Word);
+    setup_help_tags(&help_text_view.buffer());
 
     let img_kb_path = get_asset_path("assets/keyboard/kb_102.png");
     let pic_overview = if let Some(ref p) = img_kb_path {
@@ -855,34 +2082,43 @@ fn build_ui(app: &adw::Application) {
         None
     };
 
+    if let Some(top0) = initial_topics.first() {
+        right_title.set_text(&format!("{} {}", top0.icon, top0.title));
+        render_topic_content(&help_text_view.buffer(), top0, pic_overview.as_ref());
+    }
+
     for (idx, top) in initial_topics.iter().enumerate() {
         let btn = Button::with_label(&format!("{} {}", top.icon, top.title));
         btn.add_css_class("topic-item-btn");
         if idx == 0 {
             btn.add_css_class("topic-item-active");
-            right_title.set_text(&format!("{} {}", top.icon, top.title));
-            help_text_view.buffer().set_text(top.content);
         }
+        topic_box.append(&btn);
+        topic_buttons.push(btn);
+    }
 
+    for (idx, btn) in topic_buttons.iter().enumerate() {
         let state_top = state.clone();
         let rt_ref = right_title.clone();
         let htv_ref = help_text_view.clone();
         let pic_ref = pic_overview.clone();
+        let tb_click = topic_buttons.clone();
         btn.connect_clicked(move |_| {
             let mut st = state_top.borrow_mut();
             st.current_help_topic = idx;
             let current_topics = get_topics(&st.settings.language);
             if let Some(t) = current_topics.get(idx) {
                 rt_ref.set_text(&format!("{} {}", t.icon, t.title));
-                htv_ref.buffer().set_text(t.content);
+                render_topic_content(&htv_ref.buffer(), t, pic_ref.as_ref());
             }
-            if let Some(ref p) = pic_ref {
-                p.set_visible(idx == 0);
+            for (i, b) in tb_click.iter().enumerate() {
+                if i == idx {
+                    b.add_css_class("topic-item-active");
+                } else {
+                    b.remove_css_class("topic-item-active");
+                }
             }
         });
-
-        topic_box.append(&btn);
-        topic_buttons.push(btn);
     }
     topic_scrolled.set_child(Some(&topic_box));
     card_help_left.append(&topic_scrolled);
@@ -941,10 +2177,7 @@ fn build_ui(app: &adw::Application) {
             let topics = get_topics(&st.settings.language);
             if let Some(t) = topics.get(cur_idx) {
                 rt_prev.set_text(&format!("{} {}", t.icon, t.title));
-                htv_prev.buffer().set_text(t.content);
-            }
-            if let Some(ref p) = pic_prev {
-                p.set_visible(cur_idx == 0);
+                render_topic_content(&htv_prev.buffer(), t, pic_prev.as_ref());
             }
             for (i, b) in tb_prev.iter().enumerate() {
                 if i == cur_idx {
@@ -969,10 +2202,7 @@ fn build_ui(app: &adw::Application) {
             let cur_idx = st.current_help_topic;
             if let Some(t) = topics.get(cur_idx) {
                 rt_next.set_text(&format!("{} {}", t.icon, t.title));
-                htv_next.buffer().set_text(t.content);
-            }
-            if let Some(ref p) = pic_next {
-                p.set_visible(cur_idx == 0);
+                render_topic_content(&htv_next.buffer(), t, pic_next.as_ref());
             }
             for (i, b) in tb_next.iter().enumerate() {
                 if i == cur_idx {
@@ -1077,10 +2307,31 @@ fn build_ui(app: &adw::Application) {
     let lbl_pat_lang = lbl_pattern.clone();
     let lbl_fr_lang = lbl_freq.clone();
     let btn_mt_lang = btn_music_toggle.clone();
+
+    // Macro tab clones
     let lbl_mac_lang = lbl_macro_title.clone();
     let btn_mn_lang = btn_macro_new.clone();
     let btn_md_lang = btn_macro_del.clone();
     let btn_mc_lang = btn_macro_copy.clone();
+    let btn_mren_lang = btn_macro_rename.clone();
+    let btn_mimp_lang = btn_macro_import.clone();
+    let btn_mexp_lang = btn_macro_export.clone();
+    let lbl_mrep_lang = lbl_rep.clone();
+    let lbl_mdel_lang = lbl_delay_title.clone();
+    let rb_dr_lang = rb_delay_record.clone();
+    let rb_dn_lang = rb_delay_none.clone();
+    let rb_dd_lang = rb_delay_default.clone();
+    let lbl_ms_lang = lbl_ms.clone();
+    let lbl_mrec_title_lang = lbl_rec_title.clone();
+    let lbl_th_desc_lang = lbl_th_desc.clone();
+    let lbl_th_act_lang = lbl_th_act.clone();
+    let lbl_th_del_lang = lbl_th_del.clone();
+    let btn_mrec_lang = btn_macro_record.clone();
+    let btn_mplay_lang = btn_macro_play.clone();
+    let btn_msave_lang = btn_macro_save.clone();
+    let act_lb_lang = action_listbox.clone();
+
+    // Help tab clones
     let lbl_ht_lang = lbl_help_title.clone();
     let rt_lang = right_title.clone();
     let htv_lang = help_text_view.clone();
@@ -1088,6 +2339,7 @@ fn build_ui(app: &adw::Application) {
     let btn_nt_lang = btn_next_topic.clone();
     let rbs_lang = radio_buttons.clone();
     let tb_lang = topic_buttons.clone();
+    let pic_lang = pic_overview.clone();
 
     combo_lang.connect_selected_notify(move |dd| {
         let idx = dd.selected() as usize;
@@ -1123,11 +2375,33 @@ fn build_ui(app: &adw::Application) {
                 btn_mt_lang.set_label(t(code, "music_start"));
             }
 
-            // Macro View
+            // Macro View Labels
             lbl_mac_lang.set_text(t(code, "macro_list"));
             btn_mn_lang.set_label(t(code, "btn_new"));
             btn_md_lang.set_label(t(code, "btn_delete"));
             btn_mc_lang.set_label(t(code, "btn_copy"));
+            btn_mren_lang.set_label(t(code, "btn_rename"));
+            btn_mimp_lang.set_label(t(code, "btn_import"));
+            btn_mexp_lang.set_label(t(code, "btn_export"));
+            lbl_mrep_lang.set_text(t(code, "repeat_time"));
+            lbl_mdel_lang.set_text(t(code, "delay_mode"));
+            rb_dr_lang.set_label(Some(t(code, "delay_record")));
+            rb_dn_lang.set_label(Some(t(code, "delay_none")));
+            rb_dd_lang.set_label(Some(t(code, "delay_default")));
+            lbl_ms_lang.set_text(t(code, "delay_ms"));
+            lbl_mrec_title_lang.set_text(t(code, "macro_record"));
+            lbl_th_desc_lang.set_text(t(code, "col_desc"));
+            lbl_th_act_lang.set_text(t(code, "col_action"));
+            lbl_th_del_lang.set_text(t(code, "col_delay"));
+            btn_mrec_lang.set_label(if st.is_recording { t(code, "btn_stop") } else { t(code, "btn_record") });
+            btn_mplay_lang.set_label(t(code, "btn_play"));
+            btn_msave_lang.set_label(t(code, "btn_save"));
+
+            if let Some(cur_id) = st.current_macro_id {
+                if let Some(m) = st.macro_mgr.get_macro(cur_id) {
+                    populate_action_table(&act_lb_lang, &m.actions, code);
+                }
+            }
 
             // Help View
             lbl_ht_lang.set_text(t(code, "help_title"));
@@ -1142,11 +2416,10 @@ fn build_ui(app: &adw::Application) {
             }
             if let Some(t) = topics.get(st.current_help_topic) {
                 rt_lang.set_text(&format!("{} {}", t.icon, t.title));
-                htv_lang.buffer().set_text(t.content);
+                render_topic_content(&htv_lang.buffer(), t, pic_lang.as_ref());
             }
         }
     });
-
     // Auto Run Toggle
     cb_autorun.connect_toggled(move |btn| {
         let val = btn.is_active();
@@ -1289,3 +2562,4 @@ fn build_ui(app: &adw::Application) {
 
     window.present();
 }
+

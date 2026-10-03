@@ -192,7 +192,7 @@ pub fn run_cli(args: &[String]) {
             };
 
             if let Some(t) = found {
-                println!("{}", t.content);
+                println!("{}", t.plain_text());
             } else {
                 println!("Available Help Topics:");
                 for t in get_topics("en") {
@@ -328,3 +328,7 @@ pub fn print_full_help() {
     println!("  Fn + R         2.4 GHz wireless pairing mode (Hold 3-5s)");
     println!("================================================================================");
 }
+
+
+
+

@@ -255,6 +255,24 @@ pub fn t<'a>(lang: &str, key: &'a str) -> &'a str {
         ("de", "btn_save") => "Speichern",
         (_, "btn_save") => "Save",
 
+        ("pt", "action_down") => "Down",
+        ("es", "action_down") => "Down",
+        ("fr", "action_down") => "Down",
+        ("de", "action_down") => "Down",
+        (_, "action_down") => "Down",
+
+        ("pt", "action_up") => "Up",
+        ("es", "action_up") => "Up",
+        ("fr", "action_up") => "Up",
+        ("de", "action_up") => "Up",
+        (_, "action_up") => "Up",
+
+        ("pt", "hint_recording") => "● Gravando teclas... Pressione 'Parar' ao terminar.",
+        ("es", "hint_recording") => "● Grabando teclas... Presione 'Detener' al finalizar.",
+        ("fr", "hint_recording") => "● Enregistrement des touches... Cliquez sur 'Arrêter'.",
+        ("de", "hint_recording") => "● Tastendrücke aufnehmen... Klicken Sie auf 'Stopp'.",
+        (_, "hint_recording") => "● Recording keystrokes... Press 'Stop' when done.",
+
         // System Config
         ("pt", "language") => "Idioma",
         ("es", "language") => "Idioma",
