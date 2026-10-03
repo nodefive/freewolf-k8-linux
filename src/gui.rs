@@ -261,9 +261,9 @@ fn create_action_row(action: &MacroAction, lang: &str) -> ListBoxRow {
     hbox.add_css_class("macro-table-row");
 
     let lbl_desc = Label::new(Some(&action.desc));
-    lbl_desc.set_hexpand(true);
+    lbl_desc.set_size_request(245, -1);
     lbl_desc.set_halign(Align::Start);
-    lbl_desc.set_margin_start(8);
+    lbl_desc.set_margin_start(10);
 
     let act_text = if action.action == "Down" {
         t(lang, "action_down")
@@ -271,11 +271,11 @@ fn create_action_row(action: &MacroAction, lang: &str) -> ListBoxRow {
         t(lang, "action_up")
     };
     let lbl_action = Label::new(Some(act_text));
-    lbl_action.set_width_request(100);
+    lbl_action.set_size_request(115, -1);
     lbl_action.set_halign(Align::Center);
 
     let lbl_delay = Label::new(Some(&action.delay_ms.to_string()));
-    lbl_delay.set_width_request(100);
+    lbl_delay.set_size_request(110, -1);
     lbl_delay.set_halign(Align::Center);
 
     hbox.append(&lbl_desc);
@@ -302,11 +302,10 @@ fn populate_macro_list(listbox: &ListBox, macros: &[Macro], selected_id: Option<
     let mut sel_row = None;
     for (idx, m) in macros.iter().enumerate() {
         let row = ListBoxRow::new();
-        let lbl = Label::new(Some(&format!("  {}", m.name)));
+        row.add_css_class("macro-list-row");
+        let lbl = Label::new(Some(&m.name));
         lbl.set_halign(Align::Start);
-        lbl.set_margin_start(8);
-        lbl.set_margin_top(4);
-        lbl.set_margin_bottom(4);
+        lbl.set_margin_start(10);
         lbl.add_css_class("field-title");
         row.set_child(Some(&lbl));
         listbox.append(&row);
@@ -325,78 +324,91 @@ fn setup_help_tags(buf: &TextBuffer) {
 
     let tag_h2 = TextTag::new(Some("h2"));
     tag_h2.set_property("foreground", "#027ad7");
-    tag_h2.set_property("weight", 700);
-    tag_h2.set_property("pixels-above-lines", 14);
-    tag_h2.set_property("pixels-below-lines", 6);
-    tag_h2.set_property("left-margin", 16);
-    tag_h2.set_property("right-margin", 16);
+    tag_h2.set_property("weight", 700i32);
+    tag_h2.set_property("size-points", 11.0f64);
+    tag_h2.set_property("pixels-above-lines", 14i32);
+    tag_h2.set_property("pixels-below-lines", 6i32);
+    tag_h2.set_property("left-margin", 16i32);
+    tag_h2.set_property("right-margin", 16i32);
     tag_table.add(&tag_h2);
 
     let tag_body = TextTag::new(Some("body"));
     tag_body.set_property("foreground", "#d8dee9");
-    tag_body.set_property("pixels-above-lines", 3);
-    tag_body.set_property("pixels-below-lines", 4);
-    tag_body.set_property("left-margin", 16);
-    tag_body.set_property("right-margin", 16);
+    tag_body.set_property("size-points", 9.5f64);
+    tag_body.set_property("pixels-above-lines", 3i32);
+    tag_body.set_property("pixels-below-lines", 5i32);
+    tag_body.set_property("left-margin", 16i32);
+    tag_body.set_property("right-margin", 16i32);
     tag_table.add(&tag_body);
 
     let tag_bullet_dot = TextTag::new(Some("bullet_dot"));
     tag_bullet_dot.set_property("foreground", "#027ad7");
-    tag_bullet_dot.set_property("weight", 700);
-    tag_bullet_dot.set_property("left-margin", 16);
+    tag_bullet_dot.set_property("weight", 700i32);
+    tag_bullet_dot.set_property("size-points", 9.5f64);
     tag_table.add(&tag_bullet_dot);
 
     let tag_bullet = TextTag::new(Some("bullet"));
     tag_bullet.set_property("foreground", "#d8dee9");
-    tag_bullet.set_property("pixels-above-lines", 2);
-    tag_bullet.set_property("pixels-below-lines", 3);
-    tag_bullet.set_property("left-margin", 28);
-    tag_bullet.set_property("right-margin", 16);
+    tag_bullet.set_property("size-points", 9.5f64);
+    tag_bullet.set_property("pixels-above-lines", 2i32);
+    tag_bullet.set_property("pixels-below-lines", 4i32);
+    tag_bullet.set_property("left-margin", 32i32);
+    tag_bullet.set_property("indent", -16i32);
+    tag_bullet.set_property("right-margin", 16i32);
     tag_table.add(&tag_bullet);
 
     let tag_keycap = TextTag::new(Some("keycap"));
     tag_keycap.set_property("foreground", "#8ce10b");
     tag_keycap.set_property("background", "#1a2133");
-    tag_keycap.set_property("weight", 700);
+    tag_keycap.set_property("weight", 700i32);
+    tag_keycap.set_property("size-points", 9.5f64);
     tag_table.add(&tag_keycap);
 
-    let tag_keydesc = TextTag::new(Some("keydesc"));
-    tag_keydesc.set_property("foreground", "#d8dee9");
-    tag_keydesc.set_property("pixels-above-lines", 3);
-    tag_keydesc.set_property("pixels-below-lines", 3);
-    tag_keydesc.set_property("left-margin", 16);
-    tag_keydesc.set_property("right-margin", 16);
-    tag_table.add(&tag_keydesc);
+    let tag_key_row = TextTag::new(Some("key_row"));
+    tag_key_row.set_property("foreground", "#d8dee9");
+    tag_key_row.set_property("size-points", 9.5f64);
+    tag_key_row.set_property("pixels-above-lines", 4i32);
+    tag_key_row.set_property("pixels-below-lines", 4i32);
+    tag_key_row.set_property("left-margin", 155i32);
+    tag_key_row.set_property("indent", -139i32);
+    tag_key_row.set_property("right-margin", 16i32);
+    tag_table.add(&tag_key_row);
 
     let tag_table_lbl = TextTag::new(Some("table_lbl"));
     tag_table_lbl.set_property("foreground", "#ffffff");
-    tag_table_lbl.set_property("weight", 700);
-    tag_table_lbl.set_property("left-margin", 16);
+    tag_table_lbl.set_property("weight", 700i32);
+    tag_table_lbl.set_property("size-points", 9.5f64);
     tag_table.add(&tag_table_lbl);
 
-    let tag_table_val = TextTag::new(Some("table_val"));
-    tag_table_val.set_property("foreground", "#d8dee9");
-    tag_table_val.set_property("left-margin", 16);
-    tag_table_val.set_property("right-margin", 16);
-    tag_table.add(&tag_table_val);
+    let tag_table_row = TextTag::new(Some("table_row"));
+    tag_table_row.set_property("foreground", "#d8dee9");
+    tag_table_row.set_property("size-points", 9.5f64);
+    tag_table_row.set_property("pixels-above-lines", 3i32);
+    tag_table_row.set_property("pixels-below-lines", 3i32);
+    tag_table_row.set_property("left-margin", 155i32);
+    tag_table_row.set_property("indent", -139i32);
+    tag_table_row.set_property("right-margin", 16i32);
+    tag_table.add(&tag_table_row);
 
     let tag_code = TextTag::new(Some("code"));
-    tag_code.set_property("font", "Monospace 9");
+    tag_code.set_property("font", "monospace 9.5");
     tag_code.set_property("foreground", "#61afef");
     tag_code.set_property("background", "#161924");
-    tag_code.set_property("pixels-above-lines", 4);
-    tag_code.set_property("pixels-below-lines", 4);
-    tag_code.set_property("left-margin", 24);
-    tag_code.set_property("right-margin", 24);
+    tag_code.set_property("pixels-above-lines", 4i32);
+    tag_code.set_property("pixels-below-lines", 4i32);
+    tag_code.set_property("left-margin", 24i32);
+    tag_code.set_property("right-margin", 24i32);
     tag_table.add(&tag_code);
 
     let tag_tip = TextTag::new(Some("tip"));
     tag_tip.set_property("foreground", "#ffb900");
     tag_tip.set_property("background", "#222638");
-    tag_tip.set_property("pixels-above-lines", 6);
-    tag_tip.set_property("pixels-below-lines", 6);
-    tag_tip.set_property("left-margin", 20);
-    tag_tip.set_property("right-margin", 20);
+    tag_tip.set_property("style", gtk4::pango::Style::Italic);
+    tag_tip.set_property("size-points", 9.5f64);
+    tag_tip.set_property("pixels-above-lines", 6i32);
+    tag_tip.set_property("pixels-below-lines", 6i32);
+    tag_tip.set_property("left-margin", 20i32);
+    tag_tip.set_property("right-margin", 20i32);
     tag_table.add(&tag_tip);
 }
 
@@ -416,16 +428,16 @@ fn render_topic_content(buf: &TextBuffer, topic: &TopicInfo, pic: Option<&Pictur
                 buf.insert_with_tags_by_name(&mut it, &format!("{}\n", b), &["body"]);
             }
             ManualBlock::Bullet(b) => {
-                buf.insert_with_tags_by_name(&mut it, "• ", &["bullet_dot"]);
+                buf.insert_with_tags_by_name(&mut it, "• ", &["bullet", "bullet_dot"]);
                 buf.insert_with_tags_by_name(&mut it, &format!("{}\n", b), &["bullet"]);
             }
             ManualBlock::Key(k, desc) => {
-                buf.insert_with_tags_by_name(&mut it, &format!(" [ {:^16} ] ", k), &["keycap"]);
-                buf.insert_with_tags_by_name(&mut it, &format!("  {}\n", desc), &["keydesc"]);
+                buf.insert_with_tags_by_name(&mut it, &format!(" [ {} ] ", k), &["key_row", "keycap"]);
+                buf.insert_with_tags_by_name(&mut it, &format!("\t{}\n", desc), &["key_row"]);
             }
             ManualBlock::TableRow(lbl, val) => {
-                buf.insert_with_tags_by_name(&mut it, &format!("{:<26} ", lbl), &["table_lbl"]);
-                buf.insert_with_tags_by_name(&mut it, &format!(": {}\n", val), &["table_val"]);
+                buf.insert_with_tags_by_name(&mut it, &format!("{}", lbl), &["table_row", "table_lbl"]);
+                buf.insert_with_tags_by_name(&mut it, &format!("\t{}\n", val), &["table_row"]);
             }
             ManualBlock::Code(c) => {
                 buf.insert_with_tags_by_name(&mut it, &format!("   {}\n", c), &["code"]);
@@ -582,17 +594,40 @@ fn build_ui(app: &adw::Application) {
          .small-icon-btn:hover {
              background-color: #222842;
          }
+         .macro-listbox {
+             background-color: #0e1019;
+             border: 1px solid #1a1e30;
+         }
+         .macro-list-row {
+             padding: 6px 10px;
+             font-size: 11px;
+             color: #d8dee9;
+             border-bottom: 1px solid #141724;
+         }
+         .macro-list-row:selected {
+             background-color: #1c2842;
+             color: #ffffff;
+             border-left: 3px solid #027ad7;
+         }
+         .macro-action-listbox {
+             background-color: #0e1019;
+             border: 1px solid #1a1e30;
+         }
          .macro-table-header {
+             background-color: #101321;
              font-size: 10px;
              font-weight: bold;
              color: #7e88a0;
-             padding: 4px 8px;
+             padding: 4px 0;
+             border-top: 1px solid #1a1e30;
+             border-left: 1px solid #1a1e30;
+             border-right: 1px solid #1a1e30;
              border-bottom: 1px solid #232840;
          }
          .macro-table-row {
-             padding: 4px 8px;
+             padding: 4px 0;
              font-size: 10px;
-             border-bottom: 1px solid #1a1e30;
+             border-bottom: 1px solid #141724;
          }
          .macro-table-row:selected {
              background-color: #132238;
@@ -605,28 +640,102 @@ fn build_ui(app: &adw::Application) {
              border-radius: 2px;
              font-size: 10px;
              padding: 2px 4px;
+             min-height: 24px;
+         }
+         .entry-dark text {
+             background-color: #0e1019;
+             color: #ffffff;
+         }
+         .macro-radio {
+             font-size: 9.5px;
+             color: #d8dee9;
+             min-height: 18px;
+             padding: 0;
+             margin: 0;
+         }
+         .macro-radio label {
+             font-size: 9.5px;
+             color: #d8dee9;
+         }
+         .macro-radio check {
+             min-width: 13px;
+             min-height: 13px;
+             margin-right: 5px;
+             padding: 0;
+         }
+         .mode-radio {
+             font-size: 10px;
+             color: #d8dee9;
+             min-height: 19px;
+             padding: 1px 0;
+             margin: 0;
+         }
+         .mode-radio label {
+             font-size: 10px;
+             color: #d8dee9;
+         }
+         .mode-radio check {
+             min-width: 13px;
+             min-height: 13px;
+             margin-right: 6px;
+             padding: 0;
          }
          .muted-text {
              font-size: 9px;
              color: #7e88a0;
          }
+         .small-check {
+             font-size: 10px;
+             color: #d8dee9;
+             min-height: 20px;
+             padding: 0;
+             margin: 0;
+         }
+         .small-check label {
+             font-size: 10px;
+             color: #d8dee9;
+         }
+         .small-check check {
+             min-width: 14px;
+             min-height: 14px;
+             margin-right: 6px;
+             padding: 0;
+         }
+         separator {
+             background-color: #232840;
+             min-height: 1px;
+         }
          .topic-item-btn {
              background: transparent;
              border: none;
              border-radius: 0;
-             padding: 7px 10px;
+             border-left: 3px solid transparent;
+             padding: 8px 10px;
              color: #d8dee9;
-             font-size: 10px;
+             font-size: 11px;
          }
          .topic-item-btn:hover {
-             background-color: #1c2035;
+             background-color: #1a2236;
              color: #ffffff;
          }
          .topic-item-active {
-             background-color: #132238;
-             color: #027ad7;
+             background-color: #1c2842;
+             color: #ffffff;
              border-left: 3px solid #027ad7;
              font-weight: bold;
+         }
+         .help-textview {
+             background-color: #0e1019;
+             color: #d8dee9;
+             font-size: 12px;
+         }
+         .help-textview text {
+             background-color: #0e1019;
+             color: #d8dee9;
+         }
+         .help-scroll-container {
+             background-color: #0e1019;
+             border: 1px solid #1a1e30;
          }
          scale highlight {
              background-color: #027ad7;
@@ -799,7 +908,7 @@ fn build_ui(app: &adw::Application) {
     dev_box.append(&lbl_dev_badge);
 
     let lbl_dev_detail = Label::new(Some("VID: 0x1A2C  PID: 0x7C80\nInterface 1 (HID)"));
-    lbl_dev_detail.set_opacity(0.6);
+    lbl_dev_detail.add_css_class("muted-text");
     lbl_dev_detail.set_justify(gtk4::Justification::Center);
     dev_box.append(&lbl_dev_detail);
     card_light_info.append(&dev_box);
@@ -845,6 +954,7 @@ fn build_ui(app: &adw::Application) {
     opt_box.set_margin_bottom(8);
 
     let cb_autorun = CheckButton::with_label(t(&cur_lang, "auto_run"));
+    cb_autorun.add_css_class("small-check");
     cb_autorun.set_active(state.borrow().settings.auto_run);
     opt_box.append(&cb_autorun);
     card_light_info.append(&opt_box);
@@ -898,7 +1008,7 @@ fn build_ui(app: &adw::Application) {
     status_box.append(&status_hdr);
 
     let lbl_status_node = Label::new(Some("Ready on /dev/hidraw1"));
-    lbl_status_node.set_opacity(0.6);
+    lbl_status_node.add_css_class("muted-text");
     lbl_status_node.set_halign(Align::Start);
     lbl_status_node.set_margin_start(16);
     status_box.append(&lbl_status_node);
@@ -916,7 +1026,7 @@ fn build_ui(app: &adw::Application) {
     ver_box.set_margin_end(14);
     ver_box.set_margin_bottom(10);
     let lbl_ver = Label::new(Some("Ver: 1.0.3.1 (Native Rust)"));
-    lbl_ver.set_opacity(0.6);
+    lbl_ver.add_css_class("muted-text");
     lbl_ver.set_halign(Align::Start);
     ver_box.append(&lbl_ver);
     card_light_info.append(&ver_box);
@@ -931,8 +1041,8 @@ fn build_ui(app: &adw::Application) {
     let lbl_light_modes_title = Label::new(Some(t(&cur_lang, "lighting_modes")));
     lbl_light_modes_title.add_css_class("card-title");
     lbl_light_modes_title.set_justify(gtk4::Justification::Center);
-    lbl_light_modes_title.set_margin_top(10);
-    lbl_light_modes_title.set_margin_bottom(8);
+    lbl_light_modes_title.set_margin_top(8);
+    lbl_light_modes_title.set_margin_bottom(6);
     card_light_modes.append(&lbl_light_modes_title);
 
     let sep_modes = Separator::new(Orientation::Horizontal);
@@ -942,15 +1052,16 @@ fn build_ui(app: &adw::Application) {
     let grid_box = GtkBox::new(Orientation::Vertical, 0);
     grid_box.set_margin_start(18);
     grid_box.set_margin_end(18);
-    grid_box.set_margin_top(8);
-    grid_box.set_margin_bottom(6);
+    grid_box.set_margin_top(6);
+    grid_box.set_margin_bottom(4);
 
     let grid_modes = gtk4::Grid::new();
     grid_modes.set_column_spacing(16);
-    grid_modes.set_row_spacing(2);
+    grid_modes.set_row_spacing(1);
     grid_modes.set_column_homogeneous(true);
 
     let first_rb = CheckButton::with_label(get_mode_name(&cur_lang, LIGHT_MODES[0].id, LIGHT_MODES[0].name));
+    first_rb.add_css_class("mode-radio");
     let mut radio_buttons = Vec::new();
     radio_buttons.push(first_rb.clone());
 
@@ -962,6 +1073,7 @@ fn build_ui(app: &adw::Application) {
             first_rb.clone()
         } else {
             let b = CheckButton::with_label(get_mode_name(&cur_lang, m.id, m.name));
+            b.add_css_class("mode-radio");
             b.set_group(Some(&first_rb));
             b
         };
@@ -1008,15 +1120,17 @@ fn build_ui(app: &adw::Application) {
     card_light_modes.append(&grid_box);
 
     let sep_ctrl = Separator::new(Orientation::Horizontal);
-    sep_ctrl.set_margin_top(6);
-    sep_ctrl.set_margin_bottom(8);
+    sep_ctrl.set_margin_top(4);
+    sep_ctrl.set_margin_bottom(6);
     card_light_modes.append(&sep_ctrl);
 
     // Controls Section
     // 1. Standard Sliders Page
-    let std_controls_box = GtkBox::new(Orientation::Vertical, 6);
+    let std_controls_box = GtkBox::new(Orientation::Vertical, 4);
     std_controls_box.set_valign(Align::Center);
-    std_controls_box.set_margin_top(4);
+    std_controls_box.set_vexpand(true);
+    std_controls_box.set_margin_top(2);
+    std_controls_box.set_margin_bottom(2);
 
     let row_b = GtkBox::new(Orientation::Horizontal, 14);
     row_b.set_halign(Align::Center);
@@ -1145,6 +1259,7 @@ fn build_ui(app: &adw::Application) {
         stack_controls.set_visible_child_name("std");
     }
 
+    stack_controls.set_vexpand(true);
     card_light_modes.append(&stack_controls);
     stack_right.add_named(&card_light_modes, Some("light"));
 
@@ -1152,6 +1267,8 @@ fn build_ui(app: &adw::Application) {
     // =========================================================================
     // VIEW 2: MACRO VIEW
     // =========================================================================
+    let is_programmatic = Rc::new(RefCell::new(false));
+
     // --- Left Card: Macro List (w=210, h=494) ---
     let card_macro_left = GtkBox::new(Orientation::Vertical, 0);
     card_macro_left.set_size_request(210, 494);
@@ -1167,48 +1284,52 @@ fn build_ui(app: &adw::Application) {
 
     let macro_scrolled = ScrolledWindow::new();
     macro_scrolled.set_vexpand(true);
+    macro_scrolled.set_margin_start(10);
+    macro_scrolled.set_margin_end(10);
+    macro_scrolled.set_margin_top(6);
+    macro_scrolled.set_margin_bottom(10);
     let macro_listbox = ListBox::new();
-    macro_listbox.add_css_class("card-panel");
+    macro_listbox.add_css_class("macro-listbox");
     macro_scrolled.set_child(Some(&macro_listbox));
     card_macro_left.append(&macro_scrolled);
     stack_left.add_named(&card_macro_left, Some("macro"));
 
     // --- Right Card: Macro Actions & Controls (w=530, h=494) ---
-    let card_macro_right = GtkBox::new(Orientation::Vertical, 8);
+    let card_macro_right = GtkBox::new(Orientation::Vertical, 10);
     card_macro_right.set_size_request(530, 494);
 
-    // Top Card (h=155)
+    // Top Card (h=150)
     let macro_top_card = GtkBox::new(Orientation::Horizontal, 0);
-    macro_top_card.set_size_request(530, 155);
+    macro_top_card.set_size_request(530, 150);
     macro_top_card.add_css_class("card-panel");
 
     // Left half: 3x2 Grid of action buttons
     let grid_actions = Grid::new();
-    grid_actions.set_row_spacing(6);
+    grid_actions.set_row_spacing(5);
     grid_actions.set_column_spacing(6);
     grid_actions.set_margin_start(16);
     grid_actions.set_margin_end(12);
-    grid_actions.set_margin_top(14);
-    grid_actions.set_margin_bottom(14);
+    grid_actions.set_margin_top(12);
+    grid_actions.set_margin_bottom(12);
 
     let btn_macro_new = Button::with_label(t(&cur_lang, "btn_new"));
     btn_macro_new.add_css_class("secondary-btn");
-    btn_macro_new.set_size_request(86, 28);
+    btn_macro_new.set_size_request(86, 26);
     let btn_macro_del = Button::with_label(t(&cur_lang, "btn_delete"));
     btn_macro_del.add_css_class("secondary-btn");
-    btn_macro_del.set_size_request(86, 28);
+    btn_macro_del.set_size_request(86, 26);
     let btn_macro_copy = Button::with_label(t(&cur_lang, "btn_copy"));
     btn_macro_copy.add_css_class("secondary-btn");
-    btn_macro_copy.set_size_request(86, 28);
+    btn_macro_copy.set_size_request(86, 26);
     let btn_macro_rename = Button::with_label(t(&cur_lang, "btn_rename"));
     btn_macro_rename.add_css_class("secondary-btn");
-    btn_macro_rename.set_size_request(86, 28);
+    btn_macro_rename.set_size_request(86, 26);
     let btn_macro_import = Button::with_label(t(&cur_lang, "btn_import"));
     btn_macro_import.add_css_class("secondary-btn");
-    btn_macro_import.set_size_request(86, 28);
+    btn_macro_import.set_size_request(86, 26);
     let btn_macro_export = Button::with_label(t(&cur_lang, "btn_export"));
     btn_macro_export.add_css_class("secondary-btn");
-    btn_macro_export.set_size_request(86, 28);
+    btn_macro_export.set_size_request(86, 26);
 
     grid_actions.attach(&btn_macro_new, 0, 0, 1, 1);
     grid_actions.attach(&btn_macro_del, 1, 0, 1, 1);
@@ -1224,19 +1345,21 @@ fn build_ui(app: &adw::Application) {
     macro_top_card.append(&sep_top_mid);
 
     // Right half: Repeat Time and Delay Mode
-    let settings_box = GtkBox::new(Orientation::Vertical, 8);
+    let settings_box = GtkBox::new(Orientation::Vertical, 6);
     settings_box.set_hexpand(true);
     settings_box.set_margin_start(16);
     settings_box.set_margin_end(16);
-    settings_box.set_margin_top(14);
-    settings_box.set_margin_bottom(14);
+    settings_box.set_margin_top(10);
+    settings_box.set_margin_bottom(10);
 
     let row_rep = GtkBox::new(Orientation::Horizontal, 8);
+    row_rep.set_valign(Align::Center);
     let lbl_rep = Label::new(Some(t(&cur_lang, "repeat_time")));
     lbl_rep.add_css_class("field-title");
     let entry_repeat = Entry::new();
     entry_repeat.set_text("1");
-    entry_repeat.set_width_chars(5);
+    entry_repeat.set_size_request(45, 24);
+    gtk4::prelude::EditableExt::set_alignment(&entry_repeat, 0.5);
     entry_repeat.add_css_class("entry-dark");
     let lbl_rep_unit = Label::new(Some("(1 - 9999)"));
     lbl_rep_unit.add_css_class("muted-text");
@@ -1245,23 +1368,28 @@ fn build_ui(app: &adw::Application) {
     row_rep.append(&lbl_rep_unit);
     settings_box.append(&row_rep);
 
-    let delay_box = GtkBox::new(Orientation::Vertical, 4);
+    let delay_box = GtkBox::new(Orientation::Vertical, 2);
     let lbl_delay_title = Label::new(Some(t(&cur_lang, "delay_mode")));
     lbl_delay_title.add_css_class("field-title");
     lbl_delay_title.set_halign(Align::Start);
     delay_box.append(&lbl_delay_title);
 
     let rb_delay_record = CheckButton::with_label(t(&cur_lang, "delay_record"));
+    rb_delay_record.add_css_class("macro-radio");
     let rb_delay_none = CheckButton::with_label(t(&cur_lang, "delay_none"));
+    rb_delay_none.add_css_class("macro-radio");
     rb_delay_none.set_group(Some(&rb_delay_record));
 
     let row_def = GtkBox::new(Orientation::Horizontal, 6);
+    row_def.set_valign(Align::Center);
     let rb_delay_default = CheckButton::with_label(t(&cur_lang, "delay_default"));
+    rb_delay_default.add_css_class("macro-radio");
     rb_delay_default.set_group(Some(&rb_delay_record));
     rb_delay_default.set_active(true);
     let entry_default_delay = Entry::new();
     entry_default_delay.set_text("10");
-    entry_default_delay.set_width_chars(4);
+    entry_default_delay.set_size_request(45, 24);
+    gtk4::prelude::EditableExt::set_alignment(&entry_default_delay, 0.5);
     entry_default_delay.add_css_class("entry-dark");
     let lbl_ms = Label::new(Some(t(&cur_lang, "delay_ms")));
     lbl_ms.add_css_class("field-title");
@@ -1277,15 +1405,16 @@ fn build_ui(app: &adw::Application) {
     macro_top_card.append(&settings_box);
     card_macro_right.append(&macro_top_card);
 
-    // Bottom Card (h=331)
-    let macro_bottom_card = GtkBox::new(Orientation::Vertical, 6);
-    macro_bottom_card.set_size_request(530, 331);
+    // Bottom Card (h=334)
+    let macro_bottom_card = GtkBox::new(Orientation::Vertical, 4);
+    macro_bottom_card.set_size_request(530, 334);
     macro_bottom_card.add_css_class("card-panel");
 
     let hdr_row = GtkBox::new(Orientation::Horizontal, 8);
     hdr_row.set_margin_start(16);
     hdr_row.set_margin_end(16);
-    hdr_row.set_margin_top(8);
+    hdr_row.set_margin_top(6);
+    hdr_row.set_margin_bottom(2);
     let lbl_rec_title = Label::new(Some(t(&cur_lang, "macro_record")));
     lbl_rec_title.add_css_class("card-title");
     lbl_rec_title.set_hexpand(true);
@@ -1338,14 +1467,14 @@ fn build_ui(app: &adw::Application) {
     tbl_hdr.set_margin_start(16);
     tbl_hdr.set_margin_end(16);
     let lbl_th_desc = Label::new(Some(t(&cur_lang, "col_desc")));
-    lbl_th_desc.set_hexpand(true);
+    lbl_th_desc.set_size_request(245, -1);
     lbl_th_desc.set_halign(Align::Start);
-    lbl_th_desc.set_margin_start(8);
+    lbl_th_desc.set_margin_start(10);
     let lbl_th_act = Label::new(Some(t(&cur_lang, "col_action")));
-    lbl_th_act.set_width_request(100);
+    lbl_th_act.set_size_request(115, -1);
     lbl_th_act.set_halign(Align::Center);
     let lbl_th_del = Label::new(Some(t(&cur_lang, "col_delay")));
-    lbl_th_del.set_width_request(100);
+    lbl_th_del.set_size_request(110, -1);
     lbl_th_del.set_halign(Align::Center);
     tbl_hdr.append(&lbl_th_desc);
     tbl_hdr.append(&lbl_th_act);
@@ -1355,10 +1484,17 @@ fn build_ui(app: &adw::Application) {
     // Scrolled Table
     let act_scrolled = ScrolledWindow::new();
     act_scrolled.set_vexpand(true);
+    act_scrolled.set_hscrollbar_policy(gtk4::PolicyType::Never);
+    act_scrolled.set_propagate_natural_height(false);
+    act_scrolled.set_min_content_height(180);
+    act_scrolled.set_max_content_height(235);
     act_scrolled.set_margin_start(16);
     act_scrolled.set_margin_end(16);
+    act_scrolled.set_margin_top(2);
+    act_scrolled.set_margin_bottom(2);
     let action_listbox = ListBox::new();
-    action_listbox.add_css_class("card-panel");
+    action_listbox.set_activate_on_single_click(false);
+    action_listbox.add_css_class("macro-action-listbox");
     act_scrolled.set_child(Some(&action_listbox));
     macro_bottom_card.append(&act_scrolled);
 
@@ -1367,7 +1503,7 @@ fn build_ui(app: &adw::Application) {
     bot_row.set_margin_start(16);
     bot_row.set_margin_end(16);
     bot_row.set_margin_top(4);
-    bot_row.set_margin_bottom(8);
+    bot_row.set_margin_bottom(6);
 
     let lbl_record_hint = Label::new(Some("Ready"));
     lbl_record_hint.set_wrap(true);
@@ -1378,15 +1514,15 @@ fn build_ui(app: &adw::Application) {
 
     let btn_macro_record = Button::with_label(t(&cur_lang, "btn_record"));
     btn_macro_record.add_css_class("secondary-btn");
-    btn_macro_record.set_size_request(80, 28);
+    btn_macro_record.set_size_request(80, 26);
 
     let btn_macro_play = Button::with_label(t(&cur_lang, "btn_play"));
     btn_macro_play.add_css_class("secondary-btn");
-    btn_macro_play.set_size_request(80, 28);
+    btn_macro_play.set_size_request(80, 26);
 
     let btn_macro_save = Button::with_label(t(&cur_lang, "btn_save"));
     btn_macro_save.add_css_class("accent-btn");
-    btn_macro_save.set_size_request(80, 28);
+    btn_macro_save.set_size_request(80, 26);
 
     bot_row.append(&btn_macro_record);
     bot_row.append(&btn_macro_play);
@@ -1402,6 +1538,7 @@ fn build_ui(app: &adw::Application) {
     populate_macro_list(&macro_listbox, &init_macros, init_mid);
     if let Some(mid) = init_mid {
         if let Some(m) = state.borrow().macro_mgr.get_macro(mid) {
+            *is_programmatic.borrow_mut() = true;
             entry_repeat.set_text(&m.repeat_time.to_string());
             entry_default_delay.set_text(&m.default_delay.to_string());
             match m.delay_type {
@@ -1409,6 +1546,7 @@ fn build_ui(app: &adw::Application) {
                 DELAY_NONE => rb_delay_none.set_active(true),
                 _ => rb_delay_default.set_active(true),
             }
+            *is_programmatic.borrow_mut() = false;
             populate_action_table(&action_listbox, &m.actions, &cur_lang);
         }
     }
@@ -1425,14 +1563,24 @@ fn build_ui(app: &adw::Application) {
     let btn_cp_msel = btn_macro_copy.clone();
     let btn_ren_msel = btn_macro_rename.clone();
     let btn_exp_msel = btn_macro_export.clone();
+    let is_prog_msel = is_programmatic.clone();
     macro_listbox.connect_row_selected(move |_, row_opt| {
+        if *is_prog_msel.borrow() {
+            return;
+        }
         if let Some(row) = row_opt {
             let idx = row.index() as usize;
-            let mut st = state_msel.borrow_mut();
-            let macro_opt = st.macro_mgr.macros.get(idx).cloned();
-            if let Some(m) = macro_opt {
-                let mid = m.id;
-                st.current_macro_id = Some(mid);
+            let (m_opt, lang) = {
+                let mut st = state_msel.borrow_mut();
+                if let Some(m) = st.macro_mgr.macros.get(idx).cloned() {
+                    st.current_macro_id = Some(m.id);
+                    (Some(m), st.settings.language.clone())
+                } else {
+                    (None, st.settings.language.clone())
+                }
+            };
+            if let Some(m) = m_opt {
+                *is_prog_msel.borrow_mut() = true;
                 entry_rep_msel.set_text(&m.repeat_time.to_string());
                 entry_def_msel.set_text(&m.default_delay.to_string());
                 match m.delay_type {
@@ -1440,7 +1588,9 @@ fn build_ui(app: &adw::Application) {
                     DELAY_NONE => rb_dn_msel.set_active(true),
                     _ => rb_dd_msel.set_active(true),
                 }
-                populate_action_table(&act_lb_msel, &m.actions, &st.settings.language);
+                *is_prog_msel.borrow_mut() = false;
+
+                populate_action_table(&act_lb_msel, &m.actions, &lang);
                 btn_del_msel.set_sensitive(true);
                 btn_cp_msel.set_sensitive(true);
                 btn_ren_msel.set_sensitive(true);
@@ -1567,18 +1717,28 @@ fn build_ui(app: &adw::Application) {
     let state_mnew = state.clone();
     let m_lb_new = macro_listbox.clone();
     let act_lb_new = action_listbox.clone();
-    let cur_lang_new = cur_lang.clone();
+    let entry_rep_new = entry_repeat.clone();
+    let entry_def_new = entry_default_delay.clone();
+    let rb_dd_new = rb_delay_default.clone();
+    let is_prog_new = is_programmatic.clone();
     btn_macro_new.connect_clicked(move |_| {
-        let mut st = state_mnew.borrow_mut();
-        let next_id = st.macro_mgr.macros.iter().map(|m| m.id).max().unwrap_or(0) + 1;
-        let name = format!("Macro {}", next_id);
-        let new_m = st.macro_mgr.add_macro(&name);
-        let mid = new_m.id;
-        st.current_macro_id = Some(mid);
-        let macros = st.macro_mgr.macros.clone();
-        drop(st);
+        let (mid, macros, lang) = {
+            let mut st = state_mnew.borrow_mut();
+            let next_id = st.macro_mgr.macros.iter().map(|m| m.id).max().unwrap_or(0) + 1;
+            let name = format!("Macro {}", next_id);
+            let new_m = st.macro_mgr.add_macro(&name);
+            let mid = new_m.id;
+            st.current_macro_id = Some(mid);
+            (mid, st.macro_mgr.macros.clone(), st.settings.language.clone())
+        };
+        *is_prog_new.borrow_mut() = true;
+        entry_rep_new.set_text("1");
+        entry_def_new.set_text("10");
+        rb_dd_new.set_active(true);
+        *is_prog_new.borrow_mut() = false;
+
         populate_macro_list(&m_lb_new, &macros, Some(mid));
-        populate_action_table(&act_lb_new, &[], &cur_lang_new);
+        populate_action_table(&act_lb_new, &[], &lang);
     });
 
     let win_del = window.clone();
@@ -1586,50 +1746,108 @@ fn build_ui(app: &adw::Application) {
     let m_lb_del = macro_listbox.clone();
     let act_lb_del_ref = action_listbox.clone();
     let cur_lang_mdel = cur_lang.clone();
+    let entry_rep_del = entry_repeat.clone();
+    let entry_def_del = entry_default_delay.clone();
+    let rb_dr_del = rb_delay_record.clone();
+    let rb_dn_del = rb_delay_none.clone();
+    let rb_dd_del = rb_delay_default.clone();
+    let is_prog_del = is_programmatic.clone();
     btn_macro_del.connect_clicked(move |_| {
-        let st = state_mdel.borrow();
-        if let Some(cur_id) = st.current_macro_id {
-            if let Some(m) = st.macro_mgr.get_macro(cur_id) {
-                let mname = m.name.clone();
-                let st_inner = state_mdel.clone();
-                let mlb_inner = m_lb_del.clone();
-                let alb_inner = act_lb_del_ref.clone();
-                let lang_inner = cur_lang_mdel.clone();
-                show_confirm_dialog(
-                    &win_del,
-                    "Delete Macro",
-                    &format!("Are you sure you want to delete '{}'?", mname),
-                    move || {
-                        let mut stm = st_inner.borrow_mut();
-                        stm.macro_mgr.delete_macro(cur_id);
-                        stm.current_macro_id = stm.macro_mgr.macros.first().map(|m| m.id);
-                        let new_sel = stm.current_macro_id;
-                        let macros = stm.macro_mgr.macros.clone();
-                        let actions = stm.macro_mgr.macros.first().map(|m| m.actions.clone()).unwrap_or_default();
-                        drop(stm);
-                        populate_macro_list(&mlb_inner, &macros, new_sel);
-                        populate_action_table(&alb_inner, &actions, &lang_inner);
-                    },
-                );
+        let (cur_id, mname) = {
+            let st = state_mdel.borrow();
+            match st.current_macro_id {
+                Some(id) => match st.macro_mgr.get_macro(id) {
+                    Some(m) => (id, m.name.clone()),
+                    None => return,
+                },
+                None => return,
             }
-        }
+        };
+        let st_inner = state_mdel.clone();
+        let mlb_inner = m_lb_del.clone();
+        let alb_inner = act_lb_del_ref.clone();
+        let lang_inner = cur_lang_mdel.clone();
+        let is_prog_inner = is_prog_del.clone();
+        let erep_inner = entry_rep_del.clone();
+        let edef_inner = entry_def_del.clone();
+        let rb_dr_in = rb_dr_del.clone();
+        let rb_dn_in = rb_dn_del.clone();
+        let rb_dd_in = rb_dd_del.clone();
+        show_confirm_dialog(
+            &win_del,
+            "Delete Macro",
+            &format!("Are you sure you want to delete '{}'?", mname),
+            move || {
+                let (new_sel, macros, actions, rep_opt, def_opt, dt_opt) = {
+                    let mut stm = st_inner.borrow_mut();
+                    stm.macro_mgr.delete_macro(cur_id);
+                    stm.current_macro_id = stm.macro_mgr.macros.first().map(|m| m.id);
+                    let new_sel = stm.current_macro_id;
+                    let macros = stm.macro_mgr.macros.clone();
+                    let first_m = stm.macro_mgr.macros.first().cloned();
+                    let actions = first_m.as_ref().map(|m| m.actions.clone()).unwrap_or_default();
+                    let rep = first_m.as_ref().map(|m| m.repeat_time);
+                    let def = first_m.as_ref().map(|m| m.default_delay);
+                    let dt = first_m.as_ref().map(|m| m.delay_type);
+                    (new_sel, macros, actions, rep, def, dt)
+                };
+                if let (Some(rep), Some(def), Some(dt)) = (rep_opt, def_opt, dt_opt) {
+                    *is_prog_inner.borrow_mut() = true;
+                    erep_inner.set_text(&rep.to_string());
+                    edef_inner.set_text(&def.to_string());
+                    match dt {
+                        DELAY_RECORD => rb_dr_in.set_active(true),
+                        DELAY_NONE => rb_dn_in.set_active(true),
+                        _ => rb_dd_in.set_active(true),
+                    }
+                    *is_prog_inner.borrow_mut() = false;
+                }
+                populate_macro_list(&mlb_inner, &macros, new_sel);
+                populate_action_table(&alb_inner, &actions, &lang_inner);
+            },
+        );
     });
 
     let state_mcopy = state.clone();
     let m_lb_cp = macro_listbox.clone();
     let act_lb_cp = action_listbox.clone();
-    let cur_lang_cp = cur_lang.clone();
+    let entry_rep_cp = entry_repeat.clone();
+    let entry_def_cp = entry_default_delay.clone();
+    let rb_dr_cp = rb_delay_record.clone();
+    let rb_dn_cp = rb_delay_none.clone();
+    let rb_dd_cp = rb_delay_default.clone();
+    let is_prog_cp = is_programmatic.clone();
     btn_macro_copy.connect_clicked(move |_| {
-        let mut st = state_mcopy.borrow_mut();
-        if let Some(cur_id) = st.current_macro_id {
-            if let Some(new_id) = st.macro_mgr.copy_macro(cur_id) {
-                st.current_macro_id = Some(new_id);
-                let macros = st.macro_mgr.macros.clone();
-                let actions = st.macro_mgr.get_macro(new_id).map(|m| m.actions.clone()).unwrap_or_default();
-                drop(st);
-                populate_macro_list(&m_lb_cp, &macros, Some(new_id));
-                populate_action_table(&act_lb_cp, &actions, &cur_lang_cp);
+        let res = {
+            let mut st = state_mcopy.borrow_mut();
+            if let Some(cur_id) = st.current_macro_id {
+                if let Some(new_id) = st.macro_mgr.copy_macro(cur_id) {
+                    st.current_macro_id = Some(new_id);
+                    let macros = st.macro_mgr.macros.clone();
+                    let actions = st.macro_mgr.get_macro(new_id).map(|m| m.actions.clone()).unwrap_or_default();
+                    let rep = st.macro_mgr.get_macro(new_id).map(|m| m.repeat_time).unwrap_or(1);
+                    let def_d = st.macro_mgr.get_macro(new_id).map(|m| m.default_delay).unwrap_or(10);
+                    let dt = st.macro_mgr.get_macro(new_id).map(|m| m.delay_type).unwrap_or(DELAY_DEFAULT);
+                    Some((new_id, macros, actions, rep, def_d, dt, st.settings.language.clone()))
+                } else {
+                    None
+                }
+            } else {
+                None
             }
+        };
+        if let Some((new_id, macros, actions, rep, def_d, dt, lang)) = res {
+            *is_prog_cp.borrow_mut() = true;
+            entry_rep_cp.set_text(&rep.to_string());
+            entry_def_cp.set_text(&def_d.to_string());
+            match dt {
+                DELAY_RECORD => rb_dr_cp.set_active(true),
+                DELAY_NONE => rb_dn_cp.set_active(true),
+                _ => rb_dd_cp.set_active(true),
+            }
+            *is_prog_cp.borrow_mut() = false;
+            populate_macro_list(&m_lb_cp, &macros, Some(new_id));
+            populate_action_table(&act_lb_cp, &actions, &lang);
         }
     });
 
@@ -1637,29 +1855,34 @@ fn build_ui(app: &adw::Application) {
     let state_mren = state.clone();
     let m_lb_ren = macro_listbox.clone();
     btn_macro_rename.connect_clicked(move |_| {
-        let st = state_mren.borrow();
-        if let Some(cur_id) = st.current_macro_id {
-            if let Some(m) = st.macro_mgr.get_macro(cur_id) {
-                let mname = m.name.clone();
-                let st_inner = state_mren.clone();
-                let mlb_inner = m_lb_ren.clone();
-                show_input_dialog(
-                    &win_ren,
-                    "Rename Macro",
-                    "Enter new name:",
-                    &mname,
-                    move |new_name| {
-                        if !new_name.trim().is_empty() {
-                            let mut stm = st_inner.borrow_mut();
-                            stm.macro_mgr.rename_macro(cur_id, new_name.trim());
-                            let macros = stm.macro_mgr.macros.clone();
-                            drop(stm);
-                            populate_macro_list(&mlb_inner, &macros, Some(cur_id));
-                        }
-                    },
-                );
+        let (cur_id, mname) = {
+            let st = state_mren.borrow();
+            match st.current_macro_id {
+                Some(id) => match st.macro_mgr.get_macro(id) {
+                    Some(m) => (id, m.name.clone()),
+                    None => return,
+                },
+                None => return,
             }
-        }
+        };
+        let st_inner = state_mren.clone();
+        let mlb_inner = m_lb_ren.clone();
+        show_input_dialog(
+            &win_ren,
+            "Rename Macro",
+            "Enter new name:",
+            &mname,
+            move |new_name| {
+                if !new_name.trim().is_empty() {
+                    let macros = {
+                        let mut stm = st_inner.borrow_mut();
+                        stm.macro_mgr.rename_macro(cur_id, new_name.trim());
+                        stm.macro_mgr.macros.clone()
+                    };
+                    populate_macro_list(&mlb_inner, &macros, Some(cur_id));
+                }
+            },
+        );
     });
 
     let win_imp = window.clone();
@@ -1668,6 +1891,12 @@ fn build_ui(app: &adw::Application) {
     let act_lb_imp = action_listbox.clone();
     let cur_lang_imp = cur_lang.clone();
     let lbl_hint_imp = lbl_record_hint.clone();
+    let entry_rep_imp = entry_repeat.clone();
+    let entry_def_imp = entry_default_delay.clone();
+    let rb_dr_imp = rb_delay_record.clone();
+    let rb_dn_imp = rb_delay_none.clone();
+    let rb_dd_imp = rb_delay_default.clone();
+    let is_prog_imp = is_programmatic.clone();
     btn_macro_import.connect_clicked(move |_| {
         let chooser = FileChooserNative::new(
             Some("Import Macro JSON"),
@@ -1686,6 +1915,12 @@ fn build_ui(app: &adw::Application) {
         let alb_inner = act_lb_imp.clone();
         let lang_inner = cur_lang_imp.clone();
         let hint_inner = lbl_hint_imp.clone();
+        let erep_in = entry_rep_imp.clone();
+        let edef_in = entry_def_imp.clone();
+        let rb_dr_in = rb_dr_imp.clone();
+        let rb_dn_in = rb_dn_imp.clone();
+        let rb_dd_in = rb_dd_imp.clone();
+        let is_prog_in = is_prog_imp.clone();
         chooser.connect_response(move |d, resp| {
             if resp == gtk4::ResponseType::Accept {
                 if let Some(file) = d.file() {
@@ -1697,7 +1932,21 @@ fn build_ui(app: &adw::Application) {
                                 let macros = stm.macro_mgr.macros.clone();
                                 let actions = stm.macro_mgr.get_macro(new_id).map(|m| m.actions.clone()).unwrap_or_default();
                                 let name = stm.macro_mgr.get_macro(new_id).map(|m| m.name.clone()).unwrap_or_default();
+                                let rep = stm.macro_mgr.get_macro(new_id).map(|m| m.repeat_time).unwrap_or(1);
+                                let def_d = stm.macro_mgr.get_macro(new_id).map(|m| m.default_delay).unwrap_or(10);
+                                let dt = stm.macro_mgr.get_macro(new_id).map(|m| m.delay_type).unwrap_or(DELAY_DEFAULT);
                                 drop(stm);
+
+                                *is_prog_in.borrow_mut() = true;
+                                erep_in.set_text(&rep.to_string());
+                                edef_in.set_text(&def_d.to_string());
+                                match dt {
+                                    DELAY_RECORD => rb_dr_in.set_active(true),
+                                    DELAY_NONE => rb_dn_in.set_active(true),
+                                    _ => rb_dd_in.set_active(true),
+                                }
+                                *is_prog_in.borrow_mut() = false;
+
                                 populate_macro_list(&mlb_inner, &macros, Some(new_id));
                                 populate_action_table(&alb_inner, &actions, &lang_inner);
                                 hint_inner.set_text(&format!("Imported '{}'.", name));
@@ -1717,52 +1966,59 @@ fn build_ui(app: &adw::Application) {
     let state_mexp = state.clone();
     let lbl_hint_exp = lbl_record_hint.clone();
     btn_macro_export.connect_clicked(move |_| {
-        let st = state_mexp.borrow();
-        if let Some(cur_id) = st.current_macro_id {
-            if let Some(m) = st.macro_mgr.get_macro(cur_id) {
-                let mname = m.name.clone();
-                drop(st);
+        let (cur_id, mname) = {
+            let st = state_mexp.borrow();
+            match st.current_macro_id {
+                Some(id) => match st.macro_mgr.get_macro(id) {
+                    Some(m) => (id, m.name.clone()),
+                    None => return,
+                },
+                None => return,
+            }
+        };
 
-                let chooser = FileChooserNative::new(
-                    Some("Export Macro JSON"),
-                    Some(&win_exp),
-                    FileChooserAction::Save,
-                    Some("Export"),
-                    Some("Cancel"),
-                );
-                chooser.set_current_name(&format!("{}.json", mname));
-                let filter = gtk4::FileFilter::new();
-                filter.set_name(Some("JSON Files (*.json)"));
-                filter.add_pattern("*.json");
-                chooser.add_filter(&filter);
+        let chooser = FileChooserNative::new(
+            Some("Export Macro JSON"),
+            Some(&win_exp),
+            FileChooserAction::Save,
+            Some("Export"),
+            Some("Cancel"),
+        );
+        chooser.set_current_name(&format!("{}.json", mname));
+        let filter = gtk4::FileFilter::new();
+        filter.set_name(Some("JSON Files (*.json)"));
+        filter.add_pattern("*.json");
+        chooser.add_filter(&filter);
 
-                let st_inner = state_mexp.clone();
-                let hint_inner = lbl_hint_exp.clone();
-                chooser.connect_response(move |d, resp| {
-                    if resp == gtk4::ResponseType::Accept {
-                        if let Some(file) = d.file() {
-                            if let Some(path) = file.path() {
-                                let stm = st_inner.borrow();
-                                match stm.macro_mgr.export_macro(cur_id, &path) {
-                                    Ok(()) => {
-                                        hint_inner.set_text(&format!("Exported to '{}'.", path.display()));
-                                    }
-                                    Err(e) => {
-                                        hint_inner.set_text(&format!("Export failed: {}", e));
-                                    }
-                                }
+        let st_inner = state_mexp.clone();
+        let hint_inner = lbl_hint_exp.clone();
+        chooser.connect_response(move |d, resp| {
+            if resp == gtk4::ResponseType::Accept {
+                if let Some(file) = d.file() {
+                    if let Some(path) = file.path() {
+                        let stm = st_inner.borrow();
+                        match stm.macro_mgr.export_macro(cur_id, &path) {
+                            Ok(()) => {
+                                hint_inner.set_text(&format!("Exported to '{}'.", path.display()));
+                            }
+                            Err(e) => {
+                                hint_inner.set_text(&format!("Export failed: {}", e));
                             }
                         }
                     }
-                });
-                chooser.show();
+                }
             }
-        }
+        });
+        chooser.show();
     });
 
     // Repeat Time and Delay Mode editing callbacks
     let state_rep = state.clone();
+    let is_prog_rep = is_programmatic.clone();
     entry_repeat.connect_changed(move |entry| {
+        if *is_prog_rep.borrow() {
+            return;
+        }
         if let Ok(rep) = entry.text().trim().parse::<u32>() {
             let mut st = state_rep.borrow_mut();
             if let Some(cur_id) = st.current_macro_id {
@@ -1775,25 +2031,35 @@ fn build_ui(app: &adw::Application) {
 
     let state_defd = state.clone();
     let act_lb_defd = action_listbox.clone();
+    let is_prog_defd = is_programmatic.clone();
     entry_default_delay.connect_changed(move |entry| {
+        if *is_prog_defd.borrow() {
+            return;
+        }
         if let Ok(def_d) = entry.text().trim().parse::<u32>() {
-            let mut st = state_defd.borrow_mut();
-            if let Some(cur_id) = st.current_macro_id {
-                let is_default_mode = st.macro_mgr.get_macro(cur_id).map(|m| m.delay_type == DELAY_DEFAULT).unwrap_or(false);
-                if let Some(m) = st.macro_mgr.get_macro_mut(cur_id) {
-                    m.default_delay = def_d;
-                    if is_default_mode {
-                        for a in &mut m.actions {
-                            a.delay_ms = def_d;
+            let (is_default_mode, actions, lang) = {
+                let mut st = state_defd.borrow_mut();
+                if let Some(cur_id) = st.current_macro_id {
+                    let is_default_mode = st.macro_mgr.get_macro(cur_id).map(|m| m.delay_type == DELAY_DEFAULT).unwrap_or(false);
+                    if let Some(m) = st.macro_mgr.get_macro_mut(cur_id) {
+                        m.default_delay = def_d;
+                        if is_default_mode {
+                            for a in &mut m.actions {
+                                a.delay_ms = def_d;
+                            }
                         }
                     }
+                    if is_default_mode {
+                        (true, st.macro_mgr.get_macro(cur_id).unwrap().actions.clone(), st.settings.language.clone())
+                    } else {
+                        (false, Vec::new(), String::new())
+                    }
+                } else {
+                    (false, Vec::new(), String::new())
                 }
-                if is_default_mode {
-                    let actions = st.macro_mgr.get_macro(cur_id).unwrap().actions.clone();
-                    let lang = st.settings.language.clone();
-                    drop(st);
-                    populate_action_table(&act_lb_defd, &actions, &lang);
-                }
+            };
+            if is_default_mode {
+                populate_action_table(&act_lb_defd, &actions, &lang);
             }
         }
     });
@@ -1803,36 +2069,46 @@ fn build_ui(app: &adw::Application) {
     let entry_def_rb = entry_default_delay.clone();
     let rb_dr_cb = rb_delay_record.clone();
     let rb_dn_cb = rb_delay_none.clone();
+    let is_prog_rb = is_programmatic.clone();
 
     let on_delay_toggled = Rc::new(move || {
-        let mut st = state_rb.borrow_mut();
-        if let Some(cur_id) = st.current_macro_id {
-            let mode = if rb_dr_cb.is_active() {
-                DELAY_RECORD
-            } else if rb_dn_cb.is_active() {
-                DELAY_NONE
-            } else {
-                DELAY_DEFAULT
-            };
-            let def_d = entry_def_rb.text().trim().parse::<u32>().unwrap_or(10);
-            if let Some(m) = st.macro_mgr.get_macro_mut(cur_id) {
-                m.delay_type = mode;
-                if mode == DELAY_NONE {
-                    for a in &mut m.actions {
-                        a.delay_ms = 0;
-                    }
-                } else if mode == DELAY_DEFAULT {
-                    for a in &mut m.actions {
-                        a.delay_ms = def_d;
+        if *is_prog_rb.borrow() {
+            return;
+        }
+        let (should_update, actions, lang) = {
+            let mut st = state_rb.borrow_mut();
+            if let Some(cur_id) = st.current_macro_id {
+                let mode = if rb_dr_cb.is_active() {
+                    DELAY_RECORD
+                } else if rb_dn_cb.is_active() {
+                    DELAY_NONE
+                } else {
+                    DELAY_DEFAULT
+                };
+                let def_d = entry_def_rb.text().trim().parse::<u32>().unwrap_or(10);
+                if let Some(m) = st.macro_mgr.get_macro_mut(cur_id) {
+                    m.delay_type = mode;
+                    if mode == DELAY_NONE {
+                        for a in &mut m.actions {
+                            a.delay_ms = 0;
+                        }
+                    } else if mode == DELAY_DEFAULT {
+                        for a in &mut m.actions {
+                            a.delay_ms = def_d;
+                        }
                     }
                 }
+                if mode != DELAY_RECORD {
+                    (true, st.macro_mgr.get_macro(cur_id).unwrap().actions.clone(), st.settings.language.clone())
+                } else {
+                    (false, Vec::new(), String::new())
+                }
+            } else {
+                (false, Vec::new(), String::new())
             }
-            if mode != DELAY_RECORD {
-                let actions = st.macro_mgr.get_macro(cur_id).unwrap().actions.clone();
-                let lang = st.settings.language.clone();
-                drop(st);
-                populate_action_table(&act_lb_rb, &actions, &lang);
-            }
+        };
+        if should_update {
+            populate_action_table(&act_lb_rb, &actions, &lang);
         }
     });
 
@@ -2067,14 +2343,25 @@ fn build_ui(app: &adw::Application) {
 
     let help_text_view = TextView::new();
     help_text_view.set_editable(false);
+    help_text_view.set_cursor_visible(false);
     help_text_view.set_wrap_mode(WrapMode::Word);
+    help_text_view.set_left_margin(16);
+    help_text_view.set_right_margin(16);
+    help_text_view.set_top_margin(12);
+    help_text_view.set_bottom_margin(12);
+    help_text_view.set_vexpand(true);
+    help_text_view.add_css_class("help-textview");
+
+    let mut tabs = gtk4::pango::TabArray::new(1, true);
+    tabs.set_tab(0, gtk4::pango::TabAlign::Left, 155);
+    help_text_view.set_tabs(&tabs);
     setup_help_tags(&help_text_view.buffer());
 
     let img_kb_path = get_asset_path("assets/keyboard/kb_102.png");
     let pic_overview = if let Some(ref p) = img_kb_path {
         let pic = Picture::for_filename(p);
         pic.set_can_shrink(true);
-        pic.set_size_request(420, 204);
+        pic.set_size_request(420, 180);
         pic.set_margin_bottom(8);
         pic.set_halign(Align::Center);
         Some(pic)
@@ -2083,16 +2370,23 @@ fn build_ui(app: &adw::Application) {
     };
 
     if let Some(top0) = initial_topics.first() {
-        right_title.set_text(&format!("{} {}", top0.icon, top0.title));
+        right_title.set_text(&format!("{}  {}", top0.icon, top0.title));
         render_topic_content(&help_text_view.buffer(), top0, pic_overview.as_ref());
     }
 
     for (idx, top) in initial_topics.iter().enumerate() {
-        let btn = Button::with_label(&format!("{} {}", top.icon, top.title));
+        let btn = Button::new();
         btn.add_css_class("topic-item-btn");
         if idx == 0 {
             btn.add_css_class("topic-item-active");
         }
+        let hbox = GtkBox::new(Orientation::Horizontal, 8);
+        let lbl = Label::new(Some(&format!("{}  {}", top.icon, top.title)));
+        lbl.set_halign(Align::Start);
+        lbl.set_hexpand(true);
+        hbox.append(&lbl);
+        btn.set_child(Some(&hbox));
+
         topic_box.append(&btn);
         topic_buttons.push(btn);
     }
@@ -2108,7 +2402,7 @@ fn build_ui(app: &adw::Application) {
             st.current_help_topic = idx;
             let current_topics = get_topics(&st.settings.language);
             if let Some(t) = current_topics.get(idx) {
-                rt_ref.set_text(&format!("{} {}", t.icon, t.title));
+                rt_ref.set_text(&format!("{}  {}", t.icon, t.title));
                 render_topic_content(&htv_ref.buffer(), t, pic_ref.as_ref());
             }
             for (i, b) in tb_click.iter().enumerate() {
@@ -2132,16 +2426,18 @@ fn build_ui(app: &adw::Application) {
     let help_header_row = GtkBox::new(Orientation::Horizontal, 8);
     help_header_row.set_margin_start(16);
     help_header_row.set_margin_end(16);
-    help_header_row.set_margin_top(10);
-    help_header_row.set_margin_bottom(10);
+    help_header_row.set_margin_top(8);
+    help_header_row.set_margin_bottom(8);
 
     right_title.set_hexpand(true);
     help_header_row.append(&right_title);
 
     let btn_prev_topic = Button::with_label(t(&cur_lang, "btn_prev"));
     btn_prev_topic.add_css_class("secondary-btn");
+    btn_prev_topic.set_size_request(60, 24);
     let btn_next_topic = Button::with_label(t(&cur_lang, "btn_next"));
     btn_next_topic.add_css_class("secondary-btn");
+    btn_next_topic.set_size_request(60, 24);
     help_header_row.append(&btn_prev_topic);
     help_header_row.append(&btn_next_topic);
     card_help_right.append(&help_header_row);
@@ -2150,12 +2446,18 @@ fn build_ui(app: &adw::Application) {
 
     let help_content_scroll = ScrolledWindow::new();
     help_content_scroll.set_vexpand(true);
+    help_content_scroll.set_propagate_natural_height(false);
+    help_content_scroll.set_propagate_natural_width(false);
+    help_content_scroll.set_min_content_height(380);
+    help_content_scroll.set_max_content_height(420);
     help_content_scroll.set_margin_start(10);
     help_content_scroll.set_margin_end(10);
-    help_content_scroll.set_margin_top(10);
-    help_content_scroll.set_margin_bottom(10);
+    help_content_scroll.set_margin_top(6);
+    help_content_scroll.set_margin_bottom(8);
+    help_content_scroll.add_css_class("help-scroll-container");
 
     let help_inner_vbox = GtkBox::new(Orientation::Vertical, 6);
+    help_inner_vbox.set_vexpand(true);
     if let Some(ref pic) = pic_overview {
         help_inner_vbox.append(pic);
     }
@@ -2176,7 +2478,7 @@ fn build_ui(app: &adw::Application) {
             let cur_idx = st.current_help_topic;
             let topics = get_topics(&st.settings.language);
             if let Some(t) = topics.get(cur_idx) {
-                rt_prev.set_text(&format!("{} {}", t.icon, t.title));
+                rt_prev.set_text(&format!("{}  {}", t.icon, t.title));
                 render_topic_content(&htv_prev.buffer(), t, pic_prev.as_ref());
             }
             for (i, b) in tb_prev.iter().enumerate() {
@@ -2201,7 +2503,7 @@ fn build_ui(app: &adw::Application) {
             st.current_help_topic += 1;
             let cur_idx = st.current_help_topic;
             if let Some(t) = topics.get(cur_idx) {
-                rt_next.set_text(&format!("{} {}", t.icon, t.title));
+                rt_next.set_text(&format!("{}  {}", t.icon, t.title));
                 render_topic_content(&htv_next.buffer(), t, pic_next.as_ref());
             }
             for (i, b) in tb_next.iter().enumerate() {
@@ -2344,9 +2646,17 @@ fn build_ui(app: &adw::Application) {
     combo_lang.connect_selected_notify(move |dd| {
         let idx = dd.selected() as usize;
         if let Some((code, _)) = LANGUAGES.get(idx) {
-            let mut st = state_lang.borrow_mut();
-            st.settings.language = code.to_string();
-            ConfigManager::save(&st.settings);
+            let (is_music_active, cur_actions, is_rec, cur_help) = {
+                let mut st = state_lang.borrow_mut();
+                st.settings.language = code.to_string();
+                ConfigManager::save(&st.settings);
+                (
+                    st.is_music_active,
+                    st.current_macro_id.and_then(|id| st.macro_mgr.get_macro(id)).map(|m| m.actions.clone()),
+                    st.is_recording,
+                    st.current_help_topic,
+                )
+            };
 
             // Titlebar
             win_title_lang.set_title(t(code, "app_title"));
@@ -2371,7 +2681,7 @@ fn build_ui(app: &adw::Application) {
             lbl_mt_lang.set_text(t(code, "music_title"));
             lbl_pat_lang.set_text(t(code, "music_pattern"));
             lbl_fr_lang.set_text(t(code, "music_freq"));
-            if !st.is_music_active {
+            if !is_music_active {
                 btn_mt_lang.set_label(t(code, "music_start"));
             }
 
@@ -2393,14 +2703,12 @@ fn build_ui(app: &adw::Application) {
             lbl_th_desc_lang.set_text(t(code, "col_desc"));
             lbl_th_act_lang.set_text(t(code, "col_action"));
             lbl_th_del_lang.set_text(t(code, "col_delay"));
-            btn_mrec_lang.set_label(if st.is_recording { t(code, "btn_stop") } else { t(code, "btn_record") });
+            btn_mrec_lang.set_label(if is_rec { t(code, "btn_stop") } else { t(code, "btn_record") });
             btn_mplay_lang.set_label(t(code, "btn_play"));
             btn_msave_lang.set_label(t(code, "btn_save"));
 
-            if let Some(cur_id) = st.current_macro_id {
-                if let Some(m) = st.macro_mgr.get_macro(cur_id) {
-                    populate_action_table(&act_lb_lang, &m.actions, code);
-                }
+            if let Some(actions) = cur_actions {
+                populate_action_table(&act_lb_lang, &actions, code);
             }
 
             // Help View
@@ -2411,11 +2719,15 @@ fn build_ui(app: &adw::Application) {
             let topics = get_topics(code);
             for (i, b) in tb_lang.iter().enumerate() {
                 if let Some(top) = topics.get(i) {
-                    b.set_label(&format!("{} {}", top.icon, top.title));
+                    if let Some(hbox) = b.child().and_downcast::<GtkBox>() {
+                        if let Some(lbl) = hbox.first_child().and_downcast::<Label>() {
+                            lbl.set_text(&format!("{}  {}", top.icon, top.title));
+                        }
+                    }
                 }
             }
-            if let Some(t) = topics.get(st.current_help_topic) {
-                rt_lang.set_text(&format!("{} {}", t.icon, t.title));
+            if let Some(t) = topics.get(cur_help) {
+                rt_lang.set_text(&format!("{}  {}", t.icon, t.title));
                 render_topic_content(&htv_lang.buffer(), t, pic_lang.as_ref());
             }
         }
