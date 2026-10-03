@@ -205,6 +205,7 @@ fn show_confirm_dialog<F: Fn() + 'static>(
     parent: &adw::ApplicationWindow,
     title: &str,
     prompt: &str,
+    confirm_label: &str,
     on_confirm: F,
 ) {
     let dialog = Window::builder()
@@ -232,7 +233,7 @@ fn show_confirm_dialog<F: Fn() + 'static>(
 
     let btn_cancel = Button::with_label("Cancel");
     btn_cancel.add_css_class("secondary-btn");
-    let btn_ok = Button::with_label("Delete");
+    let btn_ok = Button::with_label(confirm_label);
     btn_ok.add_css_class("destructive-btn");
 
     btn_box.append(&btn_cancel);
@@ -1087,22 +1088,23 @@ fn build_ui(app: &adw::Application) {
         let stack_ctrl_ref = stack_controls.clone();
         rb.connect_toggled(move |btn| {
             if btn.is_active() {
-                let mut st = state_rc.borrow_mut();
-                st.current_mode = m_static;
-                st.settings.mode_id = m_static.id;
-                ConfigManager::save(&st.settings);
+                if let Ok(mut st) = state_rc.try_borrow_mut() {
+                    st.current_mode = m_static;
+                    st.settings.mode_id = m_static.id;
+                    ConfigManager::save(&st.settings);
 
-                if m_static.is_music() {
-                    stack_ctrl_ref.set_visible_child_name("music");
-                } else {
-                    stack_ctrl_ref.set_visible_child_name("std");
-                    if st.is_music_active {
-                        st.music_engine.stop();
-                        st.is_music_active = false;
-                    }
-                    let probe = FreeWolfK8Driver::probe();
-                    if let Some(node) = probe.node {
-                        let _ = FreeWolfK8Driver::set_lighting(&node, m_static, st.settings.brightness, st.settings.speed);
+                    if m_static.is_music() {
+                        stack_ctrl_ref.set_visible_child_name("music");
+                    } else {
+                        stack_ctrl_ref.set_visible_child_name("std");
+                        if st.is_music_active {
+                            st.music_engine.stop();
+                            st.is_music_active = false;
+                        }
+                        let probe = FreeWolfK8Driver::probe();
+                        if let Some(node) = probe.node {
+                            let _ = FreeWolfK8Driver::set_lighting(&node, m_static, st.settings.brightness, st.settings.speed);
+                        }
                     }
                 }
             }
@@ -1163,24 +1165,26 @@ fn build_ui(app: &adw::Application) {
     let state_b = state.clone();
     scale_b.connect_value_changed(move |sc| {
         let val = sc.value() as u8;
-        let mut st = state_b.borrow_mut();
-        st.settings.brightness = val;
-        ConfigManager::save(&st.settings);
-        let probe = FreeWolfK8Driver::probe();
-        if let Some(node) = probe.node {
-            let _ = FreeWolfK8Driver::set_lighting(&node, st.current_mode, val, st.settings.speed);
+        if let Ok(mut st) = state_b.try_borrow_mut() {
+            st.settings.brightness = val;
+            ConfigManager::save(&st.settings);
+            let probe = FreeWolfK8Driver::probe();
+            if let Some(node) = probe.node {
+                let _ = FreeWolfK8Driver::set_lighting(&node, st.current_mode, val, st.settings.speed);
+            }
         }
     });
 
     let state_s = state.clone();
     scale_s.connect_value_changed(move |sc| {
         let val = sc.value() as u8;
-        let mut st = state_s.borrow_mut();
-        st.settings.speed = val;
-        ConfigManager::save(&st.settings);
-        let probe = FreeWolfK8Driver::probe();
-        if let Some(node) = probe.node {
-            let _ = FreeWolfK8Driver::set_lighting(&node, st.current_mode, st.settings.brightness, val);
+        if let Ok(mut st) = state_s.try_borrow_mut() {
+            st.settings.speed = val;
+            ConfigManager::save(&st.settings);
+            let probe = FreeWolfK8Driver::probe();
+            if let Some(node) = probe.node {
+                let _ = FreeWolfK8Driver::set_lighting(&node, st.current_mode, st.settings.brightness, val);
+            }
         }
     });
 
@@ -1777,6 +1781,7 @@ fn build_ui(app: &adw::Application) {
             &win_del,
             "Delete Macro",
             &format!("Are you sure you want to delete '{}'?", mname),
+            "Delete",
             move || {
                 let (new_sel, macros, actions, rep_opt, def_opt, dt_opt) = {
                     let mut stm = st_inner.borrow_mut();
@@ -2740,24 +2745,68 @@ fn build_ui(app: &adw::Application) {
 
     // Reset Factory Settings Callback
     let state_res = state.clone();
+    let win_res = window.clone();
     let sc_b = scale_b.clone();
     let sc_s = scale_s.clone();
     let rb_first = radio_buttons.get(1).unwrap_or(&first_rb).clone(); // Mode 1: Steady
+    let cb_ar_res = cb_autorun.clone();
+    let is_prog_res = is_programmatic.clone();
+    let mlb_res = macro_listbox.clone();
+    let alb_res = action_listbox.clone();
+
     btn_restore.connect_clicked(move |_| {
-        let mut st = state_res.borrow_mut();
-        st.settings.brightness = 4;
-        st.settings.speed = 2;
-        st.settings.mode_id = 1;
-        ConfigManager::save(&st.settings);
+        let parent = win_res.clone();
+        let st_ref = state_res.clone();
+        let sc_b_ref = sc_b.clone();
+        let sc_s_ref = sc_s.clone();
+        let rb_first_ref = rb_first.clone();
+        let cb_ar_ref = cb_ar_res.clone();
+        let is_prog = is_prog_res.clone();
+        let mlb_ref = mlb_res.clone();
+        let alb_ref = alb_res.clone();
 
-        sc_b.set_value(4.0);
-        sc_s.set_value(2.0);
-        rb_first.set_active(true);
+        let cur_lang = st_ref.borrow().settings.language.clone();
+        let title = t(&cur_lang, "msg_factory_reset_title");
+        let prompt = t(&cur_lang, "msg_factory_reset_confirm");
 
-        let probe = FreeWolfK8Driver::probe();
-        if let Some(node) = probe.node {
-            let _ = FreeWolfK8Driver::set_lighting(&node, &LIGHT_MODES[1], 4, 2);
-        }
+        show_confirm_dialog(
+            &parent,
+            title,
+            prompt,
+            "Reset",
+            move || {
+                let (lang, macros) = {
+                    let mut st = st_ref.borrow_mut();
+                    st.settings.brightness = 4;
+                    st.settings.speed = 4;
+                    st.settings.mode_id = 1;
+                    st.settings.auto_run = false;
+                    ConfigManager::save(&st.settings);
+                    st.current_mode = &LIGHT_MODES[1];
+                    st.macro_mgr.macros.clear();
+                    st.macro_mgr.save();
+                    st.current_macro_id = None;
+                    (st.settings.language.clone(), st.macro_mgr.macros.clone())
+                };
+
+                *is_prog.borrow_mut() = true;
+                populate_macro_list(&mlb_ref, &macros, None);
+                populate_action_table(&alb_ref, &[], &lang);
+                *is_prog.borrow_mut() = false;
+
+                cb_ar_ref.set_active(false);
+                ConfigManager::set_autostart(false, None);
+
+                sc_b_ref.set_value(4.0);
+                sc_s_ref.set_value(4.0);
+                rb_first_ref.set_active(true);
+
+                let probe = FreeWolfK8Driver::probe();
+                if let Some(node) = probe.node {
+                    let _ = FreeWolfK8Driver::set_lighting(&node, &LIGHT_MODES[1], 4, 4);
+                }
+            },
+        );
     });
 
     // Fix udev Permissions Callback

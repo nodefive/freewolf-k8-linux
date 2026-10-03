@@ -292,6 +292,18 @@ pub fn t<'a>(lang: &str, key: &'a str) -> &'a str {
         ("de", "restore_factory") => "Einstellungen zurücksetzen",
         (_, "restore_factory") => "Reset Settings",
 
+        ("pt", "msg_factory_reset_title") => "Restauração de Fábrica",
+        ("es", "msg_factory_reset_title") => "Restablecimiento de Fábrica",
+        ("fr", "msg_factory_reset_title") => "Réinitialisation d'Usine",
+        ("de", "msg_factory_reset_title") => "Auf Werkseinstellungen zurücksetzen",
+        (_, "msg_factory_reset_title") => "Factory Reset",
+
+        ("pt", "msg_factory_reset_confirm") => "Restaurar as configurações padrão de fábrica?\n\nEsta ação não pode ser desfeita.",
+        ("es", "msg_factory_reset_confirm") => "¿Restablecer la configuración predeterminada de fábrica?\n\nEsta acción no se puede deshacer.",
+        ("fr", "msg_factory_reset_confirm") => "Restaurer les paramètres d'usine par défaut ?\n\nCette action est irréversible.",
+        ("de", "msg_factory_reset_confirm") => "Werkseinstellungen wiederherstellen?\n\nDies kann nicht rückgängig gemacht werden.",
+        (_, "msg_factory_reset_confirm") => "Restore factory default settings?\n\nThis cannot be undone.",
+
         // Connection States
         ("pt", "dev_connected") => "Dispositivo conectado",
         ("es", "dev_connected") => "Dispositivo conectado",
