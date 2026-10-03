@@ -1,0 +1,17 @@
+[package]
+name = "freewolf-k8"
+version = "1.0.0"
+edition = "2024"
+authors = ["unl0cker"]
+description = "Native Linux Controller and Driver for FREE WOLF K8 Mechanical Keyboard"
+
+[dependencies]
+libadwaita = "0.9"
+gtk4 = "0.11"
+glib = "0.22"
+gio = "0.22"
+gdk-pixbuf = "0.22"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+libc = "0.2"
+rpassword = "7.3"
