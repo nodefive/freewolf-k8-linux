@@ -1,6 +1,5 @@
-//! Modern Libadwaita / GTK4 Graphical User Interface for FREE WOLF K8
-//! Replicates the authentic Argonaut GNOME design with a slim 48px icon navbar,
-//! dual-card views, full window titlebar with borders, and rich multi-language controls.
+//! Native Linux Graphical User Interface for FREE WOLF K8 Keyboard
+//! Replicating the exact pixel positioning, layout, alignment, and styling of the Python Tkinter app.
 
 use std::cell::RefCell;
 use std::path::{Path, PathBuf};
@@ -10,7 +9,7 @@ use libadwaita as adw;
 use adw::prelude::*;
 use gtk4::prelude::*;
 use gtk4::{
-    Align, Box as GtkBox, Button, CheckButton, DropDown, Image, Label,
+    Align, Box as GtkBox, Button, CheckButton, DropDown, Fixed, Image, Label,
     Orientation, PasswordEntry, Picture, Scale, ScrolledWindow, Separator,
     Stack, StringList, TextView, WrapMode,
 };
@@ -67,96 +66,96 @@ fn build_ui(app: &adw::Application) {
     let style_manager = adw::StyleManager::default();
     style_manager.set_color_scheme(adw::ColorScheme::ForceDark);
 
-    // Apply custom Argonaut GNOME theme styling matching the original app
+    // Apply custom Argonaut GNOME theme styling matching the Python Tkinter app EXACTLY
     let provider = gtk4::CssProvider::new();
     provider.load_from_data(
         "window {\n\
              background-color: #0e1019;\n\
          }\n\
          headerbar {\n\
-             background-color: #101321;\n\
-             border-bottom: 1px solid #1a1e30;\n\
+             background-color: #0e1019;\n\
+             border-bottom: 1px solid #181c2e;\n\
              color: #ffffff;\n\
-             min-height: 40px;\n\
+             min-height: 38px;\n\
          }\n\
          headerbar .title {\n\
              font-weight: bold;\n\
+             font-size: 12px;\n\
              color: #ffffff;\n\
          }\n\
-         .navbar-strip {\n\
-             background-color: #101321;\n\
-             border-right: 1px solid #1a1e30;\n\
-             min-width: 48px;\n\
+         .sidebar-bg {\n\
+             background-color: #0e1019;\n\
+             border-right: 1px solid #181c2e;\n\
          }\n\
-         .nav-tab-btn {\n\
+         .nav-btn {\n\
              background-color: transparent;\n\
              border: none;\n\
              border-radius: 0;\n\
              min-width: 48px;\n\
-             min-height: 52px;\n\
-             padding: 8px 4px;\n\
+             min-height: 44px;\n\
+             padding: 0;\n\
          }\n\
-         .nav-tab-btn:hover {\n\
+         .nav-btn:hover {\n\
              background-color: #161b2c;\n\
          }\n\
-         .nav-tab-active {\n\
-             background-color: #151b2e;\n\
+         .nav-btn-active {\n\
+             background-color: #132238;\n\
              border-left: 3px solid #027ad7;\n\
          }\n\
          .card-panel {\n\
              background-color: #151829;\n\
              border: 1px solid #232840;\n\
-             border-radius: 8px;\n\
-             padding: 12px;\n\
+             border-radius: 0;\n\
+             padding: 0;\n\
          }\n\
          .card-title {\n\
-             font-size: 13px;\n\
-             font-weight: bold;\n\
-             color: #ffffff;\n\
-         }\n\
-         .field-title {\n\
              font-size: 11px;\n\
              font-weight: bold;\n\
              color: #ffffff;\n\
          }\n\
+         .field-title {\n\
+             font-size: 10px;\n\
+             font-weight: bold;\n\
+             color: #ffffff;\n\
+         }\n\
          .badge-connected {\n\
-             background-color: #0e1019;\n\
+             background-color: #101321;\n\
              color: #8ce10b;\n\
              border: 1px solid #8ce10b;\n\
-             border-radius: 6px;\n\
              font-weight: bold;\n\
-             padding: 6px 8px;\n\
+             font-size: 11px;\n\
+             padding: 5px 6px;\n\
          }\n\
          .badge-warning {\n\
-             background-color: #0e1019;\n\
+             background-color: #101321;\n\
              color: #ffb900;\n\
              border: 1px solid #ffb900;\n\
-             border-radius: 6px;\n\
              font-weight: bold;\n\
-             padding: 6px 8px;\n\
+             font-size: 11px;\n\
+             padding: 5px 6px;\n\
          }\n\
          .badge-disconnected {\n\
-             background-color: #0e1019;\n\
+             background-color: #101321;\n\
              color: #7e88a0;\n\
              border: 1px solid #232840;\n\
-             border-radius: 6px;\n\
              font-weight: bold;\n\
-             padding: 6px 8px;\n\
+             font-size: 11px;\n\
+             padding: 5px 6px;\n\
          }\n\
-         .status-dot-ok {\n\
+         .status-circle-ok {\n\
              background-color: #8ce10b;\n\
              border-radius: 5px;\n\
              min-width: 10px;\n\
              min-height: 10px;\n\
          }\n\
-         .status-dot-warn {\n\
+         .status-circle-warn {\n\
              background-color: #ffb900;\n\
              border-radius: 5px;\n\
              min-width: 10px;\n\
              min-height: 10px;\n\
          }\n\
-         .status-dot-err {\n\
-             background-color: #e61f44;\n\
+         .status-circle-err {\n\
+             background-color: #ED5F5D;\n\
              border-radius: 5px;\n\
              min-width: 10px;\n\
              min-height: 10px;\n\
@@ -165,36 +164,39 @@ fn build_ui(app: &adw::Application) {
              background-color: #027ad7;\n\
              color: #ffffff;\n\
              font-weight: bold;\n\
-             border-radius: 6px;\n\
              border: none;\n\
-             padding: 6px 14px;\n\
+             padding: 4px 10px;\n\
+             border-radius: 2px;\n\
+             font-size: 9px;\n\
          }\n\
          .accent-btn:hover {\n\
              background-color: #1a8fe5;\n\
          }\n\
          .secondary-btn {\n\
-             background-color: #1c2035;\n\
-             color: #c5c8d6;\n\
-             border: 1px solid #2d3350;\n\
-             border-radius: 6px;\n\
-             padding: 5px 12px;\n\
+             background-color: #1a1e32;\n\
+             color: #ffffff;\n\
+             border: 1px solid #262c45;\n\
+             border-radius: 2px;\n\
+             font-size: 9px;\n\
+             font-weight: bold;\n\
+             padding: 5px 8px;\n\
          }\n\
          .secondary-btn:hover {\n\
-             background-color: #262b45;\n\
-             color: #ffffff;\n\
+             background-color: #222842;\n\
          }\n\
-         .topic-btn {\n\
+         .topic-item-btn {\n\
              background: transparent;\n\
              border: none;\n\
-             border-radius: 6px;\n\
+             border-radius: 0;\n\
              padding: 7px 10px;\n\
-             color: #c5c8d6;\n\
+             color: #d8dee9;\n\
+             font-size: 10px;\n\
          }\n\
-         .topic-btn:hover {\n\
+         .topic-item-btn:hover {\n\
              background-color: #1c2035;\n\
              color: #ffffff;\n\
          }\n\
-         .topic-btn-active {\n\
+         .topic-item-active {\n\
              background-color: #132238;\n\
              color: #027ad7;\n\
              border-left: 3px solid #027ad7;\n\
@@ -205,6 +207,13 @@ fn build_ui(app: &adw::Application) {
          }\n\
          scale slider {\n\
              background-color: #ffffff;\n\
+             min-width: 16px;\n\
+             min-height: 16px;\n\
+         }\n\
+         scale trough {\n\
+             background-color: #101321;\n\
+             border: 1px solid #232840;\n\
+             min-height: 6px;\n\
          }\n"
     );
     gtk4::style_context_add_provider_for_display(
@@ -232,13 +241,13 @@ fn build_ui(app: &adw::Application) {
     let cur_lang = state.borrow().settings.language.clone();
 
     // -------------------------------------------------------------------------
-    // WINDOW & TITLEBAR (AdwHeaderBar provides window title, controls & borders)
+    // WINDOW & TITLEBAR (Exact dimensions: 835 width, 524 content height)
     // -------------------------------------------------------------------------
     let window = adw::ApplicationWindow::builder()
         .application(app)
         .title(t(&cur_lang, "app_title"))
-        .default_width(845)
-        .default_height(535)
+        .default_width(835)
+        .default_height(564)
         .resizable(false)
         .build();
 
@@ -251,19 +260,18 @@ fn build_ui(app: &adw::Application) {
     header_bar.set_show_start_title_buttons(true);
     root_vbox.append(&header_bar);
 
-    let content_hbox = GtkBox::new(Orientation::Horizontal, 0);
-    content_hbox.set_vexpand(true);
-    content_hbox.set_hexpand(true);
-    root_vbox.append(&content_hbox);
+    // Canvas Fixed Container for EXACT pixel-level alignment (835 x 524)
+    let fixed_canvas = Fixed::new();
+    fixed_canvas.set_size_request(835, 524);
+    root_vbox.append(&fixed_canvas);
     window.set_content(Some(&root_vbox));
 
     // -------------------------------------------------------------------------
-    // 1. SLIM LEFT NAVBAR (48px wide icon strip)
+    // 1. LEFT NAVBAR (48px wide, vertical position starting at y=73, center 95)
     // -------------------------------------------------------------------------
-    let navbar = GtkBox::new(Orientation::Vertical, 6);
-    navbar.set_size_request(48, -1);
-    navbar.add_css_class("navbar-strip");
-    navbar.set_margin_top(8);
+    let navbar = Fixed::new();
+    navbar.set_size_request(48, 524);
+    navbar.add_css_class("sidebar-bg");
 
     let path_light_act = get_asset_path("assets/icon/light_active.png");
     let path_light_inact = get_asset_path("assets/icon/light_inactive.png");
@@ -294,71 +302,93 @@ fn build_ui(app: &adw::Application) {
     img_nav_help.set_pixel_size(36);
 
     let btn_tab_light = Button::new();
+    btn_tab_light.set_size_request(48, 44);
     btn_tab_light.set_child(Some(&img_nav_light));
-    btn_tab_light.add_css_class("nav-tab-btn");
-    btn_tab_light.add_css_class("nav-tab-active");
+    btn_tab_light.add_css_class("nav-btn");
+    btn_tab_light.add_css_class("nav-btn-active");
     btn_tab_light.set_tooltip_text(Some(t(&cur_lang, "tab_light")));
+    navbar.put(&btn_tab_light, 0.0, 73.0); // center y=95
 
     let btn_tab_macro = Button::new();
+    btn_tab_macro.set_size_request(48, 44);
     btn_tab_macro.set_child(Some(&img_nav_macro));
-    btn_tab_macro.add_css_class("nav-tab-btn");
+    btn_tab_macro.add_css_class("nav-btn");
     btn_tab_macro.set_tooltip_text(Some(t(&cur_lang, "tab_macro")));
+    navbar.put(&btn_tab_macro, 0.0, 143.0); // center y=165
 
     let btn_tab_help = Button::new();
+    btn_tab_help.set_size_request(48, 44);
     btn_tab_help.set_child(Some(&img_nav_help));
-    btn_tab_help.add_css_class("nav-tab-btn");
+    btn_tab_help.add_css_class("nav-btn");
     btn_tab_help.set_tooltip_text(Some(t(&cur_lang, "tab_help")));
+    navbar.put(&btn_tab_help, 0.0, 213.0); // center y=235
 
-    navbar.append(&btn_tab_light);
-    navbar.append(&btn_tab_macro);
-    navbar.append(&btn_tab_help);
-    content_hbox.append(&navbar);
+    fixed_canvas.put(&navbar, 0.0, 0.0);
 
     // -------------------------------------------------------------------------
-    // MAIN STACK FOR THE 3 VIEWS
+    // LEFT AND RIGHT CARD STACKS (Placed at x=56, y=15 and x=280, y=15)
     // -------------------------------------------------------------------------
-    let main_stack = Stack::new();
-    main_stack.set_transition_type(gtk4::StackTransitionType::Crossfade);
-    main_stack.set_hexpand(true);
-    main_stack.set_vexpand(true);
-    content_hbox.append(&main_stack);
+    let stack_left = Stack::new();
+    stack_left.set_size_request(210, 494);
+    stack_left.set_transition_type(gtk4::StackTransitionType::None);
+
+    let stack_right = Stack::new();
+    stack_right.set_size_request(530, 494);
+    stack_right.set_transition_type(gtk4::StackTransitionType::None);
+
+    fixed_canvas.put(&stack_left, 56.0, 15.0);
+    fixed_canvas.put(&stack_right, 280.0, 15.0);
 
     // =========================================================================
-    // VIEW 1: LIGHT VIEW (Left Card 210px, Right Card 530px)
+    // VIEW 1: LIGHT VIEW
     // =========================================================================
-    let view_light = GtkBox::new(Orientation::Horizontal, 10);
-    view_light.set_margin_start(10);
-    view_light.set_margin_end(10);
-    view_light.set_margin_top(10);
-    view_light.set_margin_bottom(10);
-
-    // --- Left Card: Device & System Info (w=210) ---
-    let card_light_info = GtkBox::new(Orientation::Vertical, 8);
-    card_light_info.set_size_request(210, -1);
+    // --- 1. Left Panel (w=210, h=494) ---
+    let card_light_info = GtkBox::new(Orientation::Vertical, 0);
+    card_light_info.set_size_request(210, 494);
     card_light_info.add_css_class("card-panel");
 
+    // Top: Device Connected Header
     let lbl_conn_title = Label::new(Some(t(&cur_lang, "dev_connected")));
     lbl_conn_title.add_css_class("card-title");
     lbl_conn_title.set_justify(gtk4::Justification::Center);
+    lbl_conn_title.set_margin_top(10);
+    lbl_conn_title.set_margin_bottom(8);
     card_light_info.append(&lbl_conn_title);
+
+    // Device Badge Box
+    let dev_box = GtkBox::new(Orientation::Vertical, 6);
+    dev_box.set_margin_start(12);
+    dev_box.set_margin_end(12);
+    dev_box.set_margin_bottom(8);
 
     let lbl_dev_badge = Label::new(Some(t(&cur_lang, "dev_badge_connected")));
     lbl_dev_badge.add_css_class("badge-connected");
     lbl_dev_badge.set_justify(gtk4::Justification::Center);
-    card_light_info.append(&lbl_dev_badge);
+    dev_box.append(&lbl_dev_badge);
 
     let lbl_dev_detail = Label::new(Some("VID: 0x1A2C  PID: 0x7C80\nInterface 1 (HID)"));
     lbl_dev_detail.set_opacity(0.6);
     lbl_dev_detail.set_justify(gtk4::Justification::Center);
-    card_light_info.append(&lbl_dev_detail);
+    dev_box.append(&lbl_dev_detail);
+    card_light_info.append(&dev_box);
 
-    card_light_info.append(&Separator::new(Orientation::Horizontal));
+    let sep1 = Separator::new(Orientation::Horizontal);
+    sep1.set_margin_start(14);
+    sep1.set_margin_end(14);
+    sep1.set_margin_top(10);
+    sep1.set_margin_bottom(10);
+    card_light_info.append(&sep1);
 
-    // Language Dropdown
+    // Language Section
+    let lang_box = GtkBox::new(Orientation::Vertical, 5);
+    lang_box.set_margin_start(14);
+    lang_box.set_margin_end(14);
+    lang_box.set_margin_bottom(8);
+
     let lbl_lang = Label::new(Some(t(&cur_lang, "language")));
     lbl_lang.add_css_class("field-title");
     lbl_lang.set_halign(Align::Start);
-    card_light_info.append(&lbl_lang);
+    lang_box.append(&lbl_lang);
 
     let lang_names: Vec<&str> = LANGUAGES.iter().map(|(_, name)| *name).collect();
     let lang_model = StringList::new(&lang_names);
@@ -366,67 +396,123 @@ fn build_ui(app: &adw::Application) {
     if let Some(pos) = LANGUAGES.iter().position(|(code, _)| *code == cur_lang) {
         combo_lang.set_selected(pos as u32);
     }
-    card_light_info.append(&combo_lang);
+    lang_box.append(&combo_lang);
+    card_light_info.append(&lang_box);
 
-    card_light_info.append(&Separator::new(Orientation::Horizontal));
+    let sep2 = Separator::new(Orientation::Horizontal);
+    sep2.set_margin_start(14);
+    sep2.set_margin_end(14);
+    sep2.set_margin_top(10);
+    sep2.set_margin_bottom(10);
+    card_light_info.append(&sep2);
 
-    // Auto Run Checkbutton
+    // Auto Run CheckButton
+    let opt_box = GtkBox::new(Orientation::Vertical, 0);
+    opt_box.set_margin_start(14);
+    opt_box.set_margin_end(14);
+    opt_box.set_margin_bottom(8);
+
     let cb_autorun = CheckButton::with_label(t(&cur_lang, "auto_run"));
     cb_autorun.set_active(state.borrow().settings.auto_run);
-    card_light_info.append(&cb_autorun);
+    opt_box.append(&cb_autorun);
+    card_light_info.append(&opt_box);
 
-    card_light_info.append(&Separator::new(Orientation::Horizontal));
+    let sep3 = Separator::new(Orientation::Horizontal);
+    sep3.set_margin_start(14);
+    sep3.set_margin_end(14);
+    sep3.set_margin_top(10);
+    sep3.set_margin_bottom(10);
+    card_light_info.append(&sep3);
 
     // Reset Factory Settings Button
+    let btn_box = GtkBox::new(Orientation::Vertical, 0);
+    btn_box.set_margin_start(14);
+    btn_box.set_margin_end(14);
+    btn_box.set_margin_top(4);
+    btn_box.set_margin_bottom(8);
+
     let btn_restore = Button::with_label(t(&cur_lang, "restore_factory"));
     btn_restore.add_css_class("secondary-btn");
-    card_light_info.append(&btn_restore);
+    btn_box.append(&btn_restore);
+    card_light_info.append(&btn_box);
 
-    // Spacer pushing status to bottom
+    // Spacer
     let spacer_info = GtkBox::new(Orientation::Vertical, 0);
     spacer_info.set_vexpand(true);
     card_light_info.append(&spacer_info);
 
-    card_light_info.append(&Separator::new(Orientation::Horizontal));
+    let sep4 = Separator::new(Orientation::Horizontal);
+    sep4.set_margin_start(14);
+    sep4.set_margin_end(14);
+    sep4.set_margin_bottom(8);
+    card_light_info.append(&sep4);
 
-    // Connection Status row
-    let status_row = GtkBox::new(Orientation::Horizontal, 8);
-    let status_dot = GtkBox::new(Orientation::Horizontal, 0);
-    status_dot.add_css_class("status-dot-ok");
-    status_dot.set_valign(Align::Center);
-    status_row.append(&status_dot);
+    // Connection Status Section (Anchored at bottom)
+    let status_box = GtkBox::new(Orientation::Vertical, 2);
+    status_box.set_margin_start(14);
+    status_box.set_margin_end(14);
+    status_box.set_margin_bottom(6);
 
-    let lbl_status_node = Label::new(Some("Checking device..."));
-    lbl_status_node.set_wrap(true);
-    lbl_status_node.set_wrap_mode(gtk4::pango::WrapMode::Word);
+    let status_hdr = GtkBox::new(Orientation::Horizontal, 6);
+    let status_circle = GtkBox::new(Orientation::Horizontal, 0);
+    status_circle.add_css_class("status-circle-ok");
+    status_circle.set_valign(Align::Center);
+    status_hdr.append(&status_circle);
+
+    let lbl_status = Label::new(Some("Connected"));
+    lbl_status.add_css_class("field-title");
+    lbl_status.set_halign(Align::Start);
+    status_hdr.append(&lbl_status);
+    status_box.append(&status_hdr);
+
+    let lbl_status_node = Label::new(Some("Ready on /dev/hidraw1"));
+    lbl_status_node.set_opacity(0.6);
     lbl_status_node.set_halign(Align::Start);
-    status_row.append(&lbl_status_node);
-    card_light_info.append(&status_row);
+    lbl_status_node.set_margin_start(16);
+    status_box.append(&lbl_status_node);
 
     let btn_fix_udev = Button::with_label(t(&cur_lang, "btn_fix_udev"));
     btn_fix_udev.add_css_class("accent-btn");
     btn_fix_udev.set_visible(false);
-    card_light_info.append(&btn_fix_udev);
+    btn_fix_udev.set_margin_top(4);
+    status_box.append(&btn_fix_udev);
+    card_light_info.append(&status_box);
 
+    // Versioning
+    let ver_box = GtkBox::new(Orientation::Horizontal, 0);
+    ver_box.set_margin_start(14);
+    ver_box.set_margin_end(14);
+    ver_box.set_margin_bottom(10);
     let lbl_ver = Label::new(Some("Ver: 1.0.3.1 (Native Rust)"));
     lbl_ver.set_opacity(0.6);
     lbl_ver.set_halign(Align::Start);
-    card_light_info.append(&lbl_ver);
+    ver_box.append(&lbl_ver);
+    card_light_info.append(&ver_box);
 
-    view_light.append(&card_light_info);
+    stack_left.add_named(&card_light_info, Some("light"));
 
-    // --- Right Card: Lighting Modes & Controls (w=530) ---
-    let card_light_modes = GtkBox::new(Orientation::Vertical, 8);
-    card_light_modes.set_hexpand(true);
+    // --- 2. Right Panel: Lighting Modes & Controls (w=530, h=494) ---
+    let card_light_modes = GtkBox::new(Orientation::Vertical, 0);
+    card_light_modes.set_size_request(530, 494);
     card_light_modes.add_css_class("card-panel");
 
     let lbl_light_modes_title = Label::new(Some(t(&cur_lang, "lighting_modes")));
     lbl_light_modes_title.add_css_class("card-title");
     lbl_light_modes_title.set_justify(gtk4::Justification::Center);
+    lbl_light_modes_title.set_margin_top(10);
+    lbl_light_modes_title.set_margin_bottom(8);
     card_light_modes.append(&lbl_light_modes_title);
-    card_light_modes.append(&Separator::new(Orientation::Horizontal));
 
-    // 2-Column Mode Radio Button Grid
+    let sep_modes = Separator::new(Orientation::Horizontal);
+    card_light_modes.append(&sep_modes);
+
+    // Dual-Column Mode Radio Button Grid (Matching Python Tkinter layout)
+    let grid_box = GtkBox::new(Orientation::Vertical, 0);
+    grid_box.set_margin_start(18);
+    grid_box.set_margin_end(18);
+    grid_box.set_margin_top(8);
+    grid_box.set_margin_bottom(6);
+
     let grid_modes = gtk4::Grid::new();
     grid_modes.set_column_spacing(16);
     grid_modes.set_row_spacing(2);
@@ -478,41 +564,50 @@ fn build_ui(app: &adw::Application) {
             }
         });
 
-        let col = (i % 2) as i32;
+        // row = i // 2, col = i % 2
         let row = (i / 2) as i32;
+        let col = (i % 2) as i32;
         grid_modes.attach(&rb, col, row, 1, 1);
         if i > 0 {
             radio_buttons.push(rb);
         }
     }
-    card_light_modes.append(&grid_modes);
-    card_light_modes.append(&Separator::new(Orientation::Horizontal));
+    grid_box.append(&grid_modes);
+    card_light_modes.append(&grid_box);
 
-    // --- Controls Section (Standard Sliders vs Music Visualizer) ---
-    // Standard Sliders Page
+    let sep_ctrl = Separator::new(Orientation::Horizontal);
+    sep_ctrl.set_margin_top(6);
+    sep_ctrl.set_margin_bottom(8);
+    card_light_modes.append(&sep_ctrl);
+
+    // Controls Section
+    // 1. Standard Sliders Page
     let std_controls_box = GtkBox::new(Orientation::Vertical, 6);
     std_controls_box.set_valign(Align::Center);
+    std_controls_box.set_margin_top(4);
 
-    let row_b = GtkBox::new(Orientation::Horizontal, 12);
-    let lbl_b = Label::new(Some(&format!("{}:", t(&cur_lang, "light_brightness"))));
+    let row_b = GtkBox::new(Orientation::Horizontal, 14);
+    row_b.set_halign(Align::Center);
+    let lbl_b = Label::new(Some(t(&cur_lang, "light_brightness")));
     lbl_b.set_size_request(85, -1);
     lbl_b.set_halign(Align::End);
     lbl_b.add_css_class("field-title");
     let scale_b = Scale::with_range(Orientation::Horizontal, 0.0, 4.0, 1.0);
-    scale_b.set_hexpand(true);
+    scale_b.set_size_request(280, -1);
     scale_b.set_value(state.borrow().settings.brightness as f64);
     scale_b.set_draw_value(false);
     row_b.append(&lbl_b);
     row_b.append(&scale_b);
     std_controls_box.append(&row_b);
 
-    let row_s = GtkBox::new(Orientation::Horizontal, 12);
-    let lbl_s = Label::new(Some(&format!("{}:", t(&cur_lang, "light_speed"))));
+    let row_s = GtkBox::new(Orientation::Horizontal, 14);
+    row_s.set_halign(Align::Center);
+    let lbl_s = Label::new(Some(t(&cur_lang, "light_speed")));
     lbl_s.set_size_request(85, -1);
     lbl_s.set_halign(Align::End);
     lbl_s.add_css_class("field-title");
     let scale_s = Scale::with_range(Orientation::Horizontal, 0.0, 4.0, 1.0);
-    scale_s.set_hexpand(true);
+    scale_s.set_size_request(280, -1);
     scale_s.set_value(state.borrow().settings.speed as f64);
     scale_s.set_draw_value(false);
     row_s.append(&lbl_s);
@@ -545,7 +640,7 @@ fn build_ui(app: &adw::Application) {
 
     stack_controls.add_named(&std_controls_box, Some("std"));
 
-    // Music Visualizer Controls Page
+    // 2. Music Visualizer Page
     let music_box = GtkBox::new(Orientation::Vertical, 6);
     music_box.set_valign(Align::Center);
 
@@ -619,25 +714,21 @@ fn build_ui(app: &adw::Application) {
     }
 
     card_light_modes.append(&stack_controls);
-    view_light.append(&card_light_modes);
-    main_stack.add_named(&view_light, Some("light"));
+    stack_right.add_named(&card_light_modes, Some("light"));
 
     // =========================================================================
-    // VIEW 2: MACRO VIEW (Left Card 210px, Right Card 530px)
+    // VIEW 2: MACRO VIEW
     // =========================================================================
-    let view_macro = GtkBox::new(Orientation::Horizontal, 10);
-    view_macro.set_margin_start(10);
-    view_macro.set_margin_end(10);
-    view_macro.set_margin_top(10);
-    view_macro.set_margin_bottom(10);
-
-    // Left Card: Macro List
-    let card_macro_left = GtkBox::new(Orientation::Vertical, 8);
-    card_macro_left.set_size_request(210, -1);
+    // --- Left Card: Macro List (w=210, h=494) ---
+    let card_macro_left = GtkBox::new(Orientation::Vertical, 0);
+    card_macro_left.set_size_request(210, 494);
     card_macro_left.add_css_class("card-panel");
 
     let lbl_macro_title = Label::new(Some(t(&cur_lang, "macro_list")));
     lbl_macro_title.add_css_class("card-title");
+    lbl_macro_title.set_justify(gtk4::Justification::Center);
+    lbl_macro_title.set_margin_top(10);
+    lbl_macro_title.set_margin_bottom(8);
     card_macro_left.append(&lbl_macro_title);
     card_macro_left.append(&Separator::new(Orientation::Horizontal));
 
@@ -657,19 +748,22 @@ fn build_ui(app: &adw::Application) {
     macro_text.buffer().set_text(&macro_summary);
     macro_scrolled.set_child(Some(&macro_text));
     card_macro_left.append(&macro_scrolled);
-    view_macro.append(&card_macro_left);
+    stack_left.add_named(&card_macro_left, Some("macro"));
 
-    // Right Card: Macro Actions & Controls
-    let card_macro_right = GtkBox::new(Orientation::Vertical, 10);
-    card_macro_right.set_hexpand(true);
-    card_macro_right.add_css_class("card-panel");
+    // --- Right Card: Macro Actions & Controls (w=530, h=494) ---
+    let card_macro_right = GtkBox::new(Orientation::Vertical, 8);
+    card_macro_right.set_size_request(530, 494);
 
-    let lbl_macro_details_title = Label::new(Some("Macro Details & Playback"));
-    lbl_macro_details_title.add_css_class("card-title");
-    card_macro_right.append(&lbl_macro_details_title);
-    card_macro_right.append(&Separator::new(Orientation::Horizontal));
+    // Top Card (h=155)
+    let macro_top_card = GtkBox::new(Orientation::Vertical, 8);
+    macro_top_card.set_size_request(530, 155);
+    macro_top_card.add_css_class("card-panel");
 
     let macro_toolbar = GtkBox::new(Orientation::Horizontal, 8);
+    macro_toolbar.set_margin_start(16);
+    macro_toolbar.set_margin_end(16);
+    macro_toolbar.set_margin_top(10);
+
     let btn_macro_new = Button::with_label(t(&cur_lang, "btn_new"));
     btn_macro_new.add_css_class("secondary-btn");
     let btn_macro_del = Button::with_label(t(&cur_lang, "btn_delete"));
@@ -683,7 +777,13 @@ fn build_ui(app: &adw::Application) {
     macro_toolbar.append(&btn_macro_del);
     macro_toolbar.append(&btn_macro_copy);
     macro_toolbar.append(&btn_macro_play);
-    card_macro_right.append(&macro_toolbar);
+    macro_top_card.append(&macro_toolbar);
+    card_macro_right.append(&macro_top_card);
+
+    // Bottom Card (h=331)
+    let macro_bottom_card = GtkBox::new(Orientation::Vertical, 0);
+    macro_bottom_card.set_size_request(530, 331);
+    macro_bottom_card.add_css_class("card-panel");
 
     let macro_detail_scrolled = ScrolledWindow::new();
     macro_detail_scrolled.set_vexpand(true);
@@ -691,7 +791,8 @@ fn build_ui(app: &adw::Application) {
     macro_detail_text.set_editable(false);
     macro_detail_text.buffer().set_text("Select a macro from the left list to view keystrokes and timing.\nPress 'Play' to execute virtual keystrokes via Linux /dev/uinput.");
     macro_detail_scrolled.set_child(Some(&macro_detail_text));
-    card_macro_right.append(&macro_detail_scrolled);
+    macro_bottom_card.append(&macro_detail_scrolled);
+    card_macro_right.append(&macro_bottom_card);
 
     let state_play = state.clone();
     btn_macro_play.connect_clicked(move |_| {
@@ -702,31 +803,34 @@ fn build_ui(app: &adw::Application) {
         }
     });
 
-    view_macro.append(&card_macro_right);
-    main_stack.add_named(&view_macro, Some("macro"));
+    stack_right.add_named(&card_macro_right, Some("macro"));
 
     // =========================================================================
-    // VIEW 3: HELP VIEW (Left Card 210px with 9 topics, Right Card 530px)
+    // VIEW 3: HELP VIEW
     // =========================================================================
-    let view_help = GtkBox::new(Orientation::Horizontal, 10);
-    view_help.set_margin_start(10);
-    view_help.set_margin_end(10);
-    view_help.set_margin_top(10);
-    view_help.set_margin_bottom(10);
-
-    // Left Card: 9 Topics List (w=210)
-    let card_help_left = GtkBox::new(Orientation::Vertical, 8);
-    card_help_left.set_size_request(210, -1);
+    // --- Left Card: 9 Topics List (w=210, h=494) ---
+    let card_help_left = GtkBox::new(Orientation::Vertical, 0);
+    card_help_left.set_size_request(210, 494);
     card_help_left.add_css_class("card-panel");
 
     let lbl_help_title = Label::new(Some(t(&cur_lang, "help_title")));
     lbl_help_title.add_css_class("card-title");
+    lbl_help_title.set_justify(gtk4::Justification::Center);
+    lbl_help_title.set_margin_top(12);
+    lbl_help_title.set_margin_bottom(8);
     card_help_left.append(&lbl_help_title);
-    card_help_left.append(&Separator::new(Orientation::Horizontal));
+
+    let sep_help_left = Separator::new(Orientation::Horizontal);
+    sep_help_left.set_margin_start(8);
+    sep_help_left.set_margin_end(8);
+    sep_help_left.set_margin_bottom(6);
+    card_help_left.append(&sep_help_left);
 
     let topic_scrolled = ScrolledWindow::new();
     topic_scrolled.set_vexpand(true);
     let topic_box = GtkBox::new(Orientation::Vertical, 2);
+    topic_box.set_margin_start(4);
+    topic_box.set_margin_end(4);
 
     let initial_topics = get_topics(&cur_lang);
     let mut topic_buttons: Vec<Button> = Vec::new();
@@ -743,8 +847,9 @@ fn build_ui(app: &adw::Application) {
     let pic_overview = if let Some(ref p) = img_kb_path {
         let pic = Picture::for_filename(p);
         pic.set_can_shrink(true);
-        pic.set_height_request(160);
+        pic.set_size_request(420, 204);
         pic.set_margin_bottom(8);
+        pic.set_halign(Align::Center);
         Some(pic)
     } else {
         None
@@ -752,9 +857,9 @@ fn build_ui(app: &adw::Application) {
 
     for (idx, top) in initial_topics.iter().enumerate() {
         let btn = Button::with_label(&format!("{} {}", top.icon, top.title));
-        btn.add_css_class("topic-btn");
+        btn.add_css_class("topic-item-btn");
         if idx == 0 {
-            btn.add_css_class("topic-btn-active");
+            btn.add_css_class("topic-item-active");
             right_title.set_text(&format!("{} {}", top.icon, top.title));
             help_text_view.buffer().set_text(top.content);
         }
@@ -781,14 +886,19 @@ fn build_ui(app: &adw::Application) {
     }
     topic_scrolled.set_child(Some(&topic_box));
     card_help_left.append(&topic_scrolled);
-    view_help.append(&card_help_left);
+    stack_left.add_named(&card_help_left, Some("help"));
 
-    // Right Card: Topic Content (w=530)
-    let card_help_right = GtkBox::new(Orientation::Vertical, 8);
-    card_help_right.set_hexpand(true);
+    // --- Right Card: Topic Content (w=530, h=494) ---
+    let card_help_right = GtkBox::new(Orientation::Vertical, 0);
+    card_help_right.set_size_request(530, 494);
     card_help_right.add_css_class("card-panel");
 
     let help_header_row = GtkBox::new(Orientation::Horizontal, 8);
+    help_header_row.set_margin_start(16);
+    help_header_row.set_margin_end(16);
+    help_header_row.set_margin_top(10);
+    help_header_row.set_margin_bottom(10);
+
     right_title.set_hexpand(true);
     help_header_row.append(&right_title);
 
@@ -799,10 +909,15 @@ fn build_ui(app: &adw::Application) {
     help_header_row.append(&btn_prev_topic);
     help_header_row.append(&btn_next_topic);
     card_help_right.append(&help_header_row);
+
     card_help_right.append(&Separator::new(Orientation::Horizontal));
 
     let help_content_scroll = ScrolledWindow::new();
     help_content_scroll.set_vexpand(true);
+    help_content_scroll.set_margin_start(10);
+    help_content_scroll.set_margin_end(10);
+    help_content_scroll.set_margin_top(10);
+    help_content_scroll.set_margin_bottom(10);
 
     let help_inner_vbox = GtkBox::new(Orientation::Vertical, 6);
     if let Some(ref pic) = pic_overview {
@@ -833,9 +948,9 @@ fn build_ui(app: &adw::Application) {
             }
             for (i, b) in tb_prev.iter().enumerate() {
                 if i == cur_idx {
-                    b.add_css_class("topic-btn-active");
+                    b.add_css_class("topic-item-active");
                 } else {
-                    b.remove_css_class("topic-btn-active");
+                    b.remove_css_class("topic-item-active");
                 }
             }
         }
@@ -861,21 +976,21 @@ fn build_ui(app: &adw::Application) {
             }
             for (i, b) in tb_next.iter().enumerate() {
                 if i == cur_idx {
-                    b.add_css_class("topic-btn-active");
+                    b.add_css_class("topic-item-active");
                 } else {
-                    b.remove_css_class("topic-btn-active");
+                    b.remove_css_class("topic-item-active");
                 }
             }
         }
     });
 
-    view_help.append(&card_help_right);
-    main_stack.add_named(&view_help, Some("help"));
+    stack_right.add_named(&card_help_right, Some("help"));
 
     // -------------------------------------------------------------------------
     // NAVBAR SWITCHING CALLBACKS
     // -------------------------------------------------------------------------
-    let stack_ref = main_stack.clone();
+    let sl_ref = stack_left.clone();
+    let sr_ref = stack_right.clone();
     let b_light = btn_tab_light.clone();
     let b_macro = btn_tab_macro.clone();
     let b_help = btn_tab_help.clone();
@@ -890,25 +1005,25 @@ fn build_ui(app: &adw::Application) {
     let p_hi = path_help_inact.clone();
 
     let update_nav_visuals = move |active_tab: &str| {
-        b_light.remove_css_class("nav-tab-active");
-        b_macro.remove_css_class("nav-tab-active");
-        b_help.remove_css_class("nav-tab-active");
+        b_light.remove_css_class("nav-btn-active");
+        b_macro.remove_css_class("nav-btn-active");
+        b_help.remove_css_class("nav-btn-active");
 
         match active_tab {
             "light" => {
-                b_light.add_css_class("nav-tab-active");
+                b_light.add_css_class("nav-btn-active");
                 if let Some(ref p) = p_la { img_l.set_from_file(Some(p)); }
                 if let Some(ref p) = p_mi { img_m.set_from_file(Some(p)); }
                 if let Some(ref p) = p_hi { img_h.set_from_file(Some(p)); }
             }
             "macro" => {
-                b_macro.add_css_class("nav-tab-active");
+                b_macro.add_css_class("nav-btn-active");
                 if let Some(ref p) = p_li { img_l.set_from_file(Some(p)); }
                 if let Some(ref p) = p_ma { img_m.set_from_file(Some(p)); }
                 if let Some(ref p) = p_hi { img_h.set_from_file(Some(p)); }
             }
             "help" => {
-                b_help.add_css_class("nav-tab-active");
+                b_help.add_css_class("nav-btn-active");
                 if let Some(ref p) = p_li { img_l.set_from_file(Some(p)); }
                 if let Some(ref p) = p_mi { img_m.set_from_file(Some(p)); }
                 if let Some(ref p) = p_ha { img_h.set_from_file(Some(p)); }
@@ -917,24 +1032,30 @@ fn build_ui(app: &adw::Application) {
         }
     };
 
-    let s1 = stack_ref.clone();
+    let sl1 = sl_ref.clone();
+    let sr1 = sr_ref.clone();
     let unv1 = update_nav_visuals.clone();
     btn_tab_light.connect_clicked(move |_| {
-        s1.set_visible_child_name("light");
+        sl1.set_visible_child_name("light");
+        sr1.set_visible_child_name("light");
         unv1("light");
     });
 
-    let s2 = stack_ref.clone();
+    let sl2 = sl_ref.clone();
+    let sr2 = sr_ref.clone();
     let unv2 = update_nav_visuals.clone();
     btn_tab_macro.connect_clicked(move |_| {
-        s2.set_visible_child_name("macro");
+        sl2.set_visible_child_name("macro");
+        sr2.set_visible_child_name("macro");
         unv2("macro");
     });
 
-    let s3 = stack_ref.clone();
+    let sl3 = sl_ref.clone();
+    let sr3 = sr_ref.clone();
     let unv3 = update_nav_visuals.clone();
     btn_tab_help.connect_clicked(move |_| {
-        s3.set_visible_child_name("help");
+        sl3.set_visible_child_name("help");
+        sr3.set_visible_child_name("help");
         unv3("help");
     });
 
@@ -988,8 +1109,8 @@ fn build_ui(app: &adw::Application) {
 
             // Light View Right Card
             lbl_lm_lang.set_text(t(code, "lighting_modes"));
-            lbl_b_l.set_text(&format!("{}:", t(code, "light_brightness")));
-            lbl_s_l.set_text(&format!("{}:", t(code, "light_speed")));
+            lbl_b_l.set_text(t(code, "light_brightness"));
+            lbl_s_l.set_text(t(code, "light_speed"));
             for (rb, m) in rbs_lang.iter().zip(LIGHT_MODES.iter()) {
                 rb.set_label(Some(get_mode_name(code, m.id, m.name)));
             }
@@ -1081,10 +1202,10 @@ fn build_ui(app: &adw::Application) {
         entry_pw.set_show_peek_icon(true);
         vbox.append(&entry_pw);
 
-        let lbl_status = Label::new(None);
-        lbl_status.set_css_classes(&["badge-warning"]);
-        lbl_status.set_visible(false);
-        vbox.append(&lbl_status);
+        let lbl_status_dlg = Label::new(None);
+        lbl_status_dlg.set_css_classes(&["badge-warning"]);
+        lbl_status_dlg.set_visible(false);
+        vbox.append(&lbl_status_dlg);
 
         let hbox = GtkBox::new(Orientation::Horizontal, 8);
         hbox.set_halign(Align::End);
@@ -1102,7 +1223,7 @@ fn build_ui(app: &adw::Application) {
 
         let dlg_a = dialog.clone();
         let ent = entry_pw.clone();
-        let lbl_s = lbl_status.clone();
+        let lbl_s = lbl_status_dlg.clone();
         btn_auth.connect_clicked(move |_| {
             let pw = ent.text();
             let (ok, msg) = crate::udev::run_setup_with_sudo(&pw);
@@ -1123,38 +1244,43 @@ fn build_ui(app: &adw::Application) {
     // -------------------------------------------------------------------------
     let lbl_node_timer = lbl_status_node.clone();
     let lbl_badge_timer = lbl_dev_badge.clone();
-    let dot_timer = status_dot.clone();
+    let dot_timer = status_circle.clone();
     let btn_fix_timer = btn_fix_udev.clone();
+    let lbl_st_timer = lbl_status.clone();
 
     glib::timeout_add_local(Duration::from_millis(2000), move || {
         let probe = FreeWolfK8Driver::probe();
         match probe.state {
             DeviceState::Connected => {
+                lbl_st_timer.set_text("Connected");
                 lbl_badge_timer.set_text("FREE WOLF K8 USB");
                 lbl_badge_timer.set_css_classes(&["badge-connected"]);
-                lbl_node_timer.set_text(&format!("Connected ({})", probe.node.unwrap_or_default()));
-                dot_timer.set_css_classes(&["status-dot-ok"]);
+                lbl_node_timer.set_text(&format!("Ready on {}", probe.node.unwrap_or_default()));
+                dot_timer.set_css_classes(&["status-circle-ok"]);
                 btn_fix_timer.set_visible(false);
             }
             DeviceState::PermissionDenied => {
+                lbl_st_timer.set_text("Access Denied");
                 lbl_badge_timer.set_text("FREE WOLF K8 (Access Denied)");
                 lbl_badge_timer.set_css_classes(&["badge-warning"]);
                 lbl_node_timer.set_text("Write permission required");
-                dot_timer.set_css_classes(&["status-dot-warn"]);
+                dot_timer.set_css_classes(&["status-circle-warn"]);
                 btn_fix_timer.set_visible(true);
             }
             DeviceState::ClaimedByVm => {
+                lbl_st_timer.set_text("Claimed by VM");
                 lbl_badge_timer.set_text("FREE WOLF K8 (QEMU VM)");
                 lbl_badge_timer.set_css_classes(&["badge-warning"]);
                 lbl_node_timer.set_text("USB claimed by guest OS");
-                dot_timer.set_css_classes(&["status-dot-warn"]);
+                dot_timer.set_css_classes(&["status-circle-warn"]);
                 btn_fix_timer.set_visible(false);
             }
             DeviceState::NotFound => {
+                lbl_st_timer.set_text("Device disconnected");
                 lbl_badge_timer.set_text("NO DEVICE DETECTED");
                 lbl_badge_timer.set_css_classes(&["badge-disconnected"]);
                 lbl_node_timer.set_text("Please connect keyboard");
-                dot_timer.set_css_classes(&["status-dot-err"]);
+                dot_timer.set_css_classes(&["status-circle-err"]);
                 btn_fix_timer.set_visible(false);
             }
         }
