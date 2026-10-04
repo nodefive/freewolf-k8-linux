@@ -1,0 +1,9 @@
+# FREE WOLF K8 Mechanical Keyboard (Wired USB: 0x1a2c:0x7c80, Wireless 2.4G: 0x1a2c:0x7fff)
+# Grants user access to the hidraw configuration interface (Interface 1)
+
+KERNEL=="hidraw*", ATTRS{idVendor}=="1a2c", ATTRS{idProduct}=="7c80", MODE="0666", TAG+="uaccess"
+KERNEL=="hidraw*", ATTRS{idVendor}=="1a2c", ATTRS{idProduct}=="7fff", MODE="0666", TAG+="uaccess"
+
+# Virtual input device access for macro keystroke playback
+KERNEL=="uinput", MODE="0666", TAG+="uaccess"
+
