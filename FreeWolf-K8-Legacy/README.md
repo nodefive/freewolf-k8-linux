@@ -9,6 +9,10 @@ This directory contains the original Python 3 / Tkinter implementation and drive
 > [!NOTE]
 > For daily use, high performance, and modern desktop integration, the **native Rust + GTK4/Libadwaita** application in the repository root is strongly recommended. This Python version is preserved as a lightweight, zero-compilation reference and alternative.
 
+> [!IMPORTANT]
+> **Supported Connection Modes**: The Python application and CLI communicate via USB HID Feature Reports and operate **exclusively in USB Wired Mode (`VID: 0x1A2C`, `PID: 0x7C80`) and 2.4 GHz Wireless USB Dongle Mode (`VID: 0x1A2C`, `PID: 0x7FFF`)**.
+> **Bluetooth Mode (BT1, BT2, BT3) does NOT support software configuration** due to keyboard firmware isolation of vendor feature reports. (Hardware shortcuts like `FN + |`, `FN + ↑/↓`, etc. continue to work normally in all modes).
+
 ---
 
 ## Requirements & Prerequisites

@@ -13,6 +13,10 @@ A high-performance, native Linux driver, graphical configuration studio, and CLI
 
 Engineered entirely in **Rust** using **GTK4** and **Libadwaita** with a custom dark Argonaut GNOME theme. The application compiles to a **single unified native binary** (`freewolf-k8`) that functions as both a modern desktop GUI and a fast, scriptable terminal CLI.
 
+> [!IMPORTANT]
+> **Supported Connection Modes**: The controller application and CLI communicate via USB HID Feature Reports and operate **exclusively over USB Wired Mode (`VID: 0x1A2C`, `PID: 0x7C80`) and 2.4 GHz Wireless USB Dongle Mode (`VID: 0x1A2C`, `PID: 0x7FFF`)**.
+> **Bluetooth Mode (BT1, BT2, BT3) does NOT support software configuration** because the keyboard's Bluetooth firmware only exposes standard typing descriptors and isolates vendor feature reports. (Hardware shortcuts like `FN + |`, `FN + ↑/↓`, etc. continue to work normally in all modes).
+
 ---
 
 ## Screenshots
@@ -332,6 +336,9 @@ Run `./freewolf-k8 setup-udev` or install `99-freewolf-k8.rules` into `/etc/udev
 
 ### Claimed by VM
 If running inside a virtual machine (such as QEMU / KVM / VirtualBox) or if the host captured the USB device through `usbfs`, ensure USB pass-through is properly forwarded to your guest OS or release the device on the host.
+
+### Does the app work over Bluetooth?
+**No.** Software-level control (lighting effects, sliders, and audio visualizer) only works when connected via the **USB-C cable** or the **2.4 GHz USB wireless receiver dongle**. In Bluetooth mode (BT1, BT2, BT3), the keyboard's Bluetooth firmware only exposes standard keyboard and consumer media keys to ensure universal OS compatibility; it does not bridge the proprietary vendor HID Feature Reports needed for software lighting control. This is a hardware/firmware constraint of the keyboard itself (the official Windows software also requires the USB cable or 2.4 GHz dongle). All hardware hotkeys (`FN + |`, `FN + ↑/↓`, `FN + ~`) work normally in Bluetooth mode.
 
 ### Battery Reporting
 The FREEWOLF K8 hardware uses an autonomous onboard analog charging circuit. USB wired and 2.4 GHz RF modes do not expose a battery telemetry report to the host OS. Battery status is indicated physically via the dedicated charging LED (illuminates while charging, extinguishes at 100% full capacity) and automatic backlight power-cutoff when battery is low.
