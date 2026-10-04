@@ -103,10 +103,11 @@ class FreeWolfK8App(tk.Tk):
         self.resizable(False, False)
 
         # Set window icon
-        icon_path = os.path.join(ASSETS_DIR, "DeviceDriver.ico")
+        icon_path = os.path.join(ASSETS_DIR, "DeviceDriver.png")
         if os.path.exists(icon_path):
             try:
-                self.iconbitmap(icon_path)
+                img = tk.PhotoImage(file=icon_path)
+                self.iconphoto(True, img)
             except Exception:
                 pass
 

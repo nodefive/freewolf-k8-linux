@@ -158,7 +158,6 @@ Byte 7:  0x00          (Padding)
 ```
 FreeWolf-K8-Legacy/
 ├── assets/
-│   ├── DeviceDriver.ico      # Windows OEM application icon
 │   ├── DeviceDriver.png      # 500x500 high-res application icon
 │   ├── icon/                 # UI navigation tab icons
 │   └── keyboard/             # High-resolution keyboard layout diagram (kb_102.png)

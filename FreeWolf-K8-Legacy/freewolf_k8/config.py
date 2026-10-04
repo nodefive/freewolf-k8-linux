@@ -15,7 +15,7 @@ AUTOSTART_FILE = os.path.join(AUTOSTART_DIR, "freewolf-k8.desktop")
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GUI_SCRIPT = os.path.join(REPO_ROOT, "k8gui")
-ICON_PATH = os.path.join(REPO_ROOT, "assets", "DeviceDriver.ico")
+ICON_PATH = os.path.join(REPO_ROOT, "assets", "DeviceDriver.png")
 
 @dataclass
 class Settings:
