@@ -1,6 +1,6 @@
 [package]
 name = "freewolf-k8"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2024"
 authors = ["unl0cker"]
 description = "Native Linux Controller and Driver for FREE WOLF K8 Mechanical Keyboard"

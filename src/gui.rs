@@ -1097,8 +1097,8 @@ fn build_ui(app: &adw::Application) {
     let ver_box = GtkBox::new(Orientation::Horizontal, 0);
     ver_box.set_margin_start(14);
     ver_box.set_margin_end(14);
-    ver_box.set_margin_bottom(10);
-    let lbl_ver = Label::new(Some("Ver: 1.0.3.1 (Native Rust)"));
+    let ver_str = format!("Ver: {} (Native Rust)", env!("CARGO_PKG_VERSION"));
+    let lbl_ver = Label::new(Some(&ver_str));
     lbl_ver.add_css_class("muted-text");
     lbl_ver.set_halign(Align::Start);
     ver_box.append(&lbl_ver);
