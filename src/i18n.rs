@@ -53,11 +53,11 @@ pub fn get_mode_name(lang: &str, mode_id: u8, default_name: &'static str) -> &'s
 pub fn t<'a>(lang: &str, key: &'a str) -> &'a str {
     match (lang, key) {
         // App title
-        ("pt", "app_title") => "FREE WOLF K8 - Configuração Linux",
-        ("es", "app_title") => "FREE WOLF K8 - Configuración Linux",
-        ("fr", "app_title") => "FREE WOLF K8 - Configuration Linux",
-        ("de", "app_title") => "FREE WOLF K8 - Linux-Konfiguration",
-        (_, "app_title") => "FREE WOLF K8 - Linux Configuration",
+        ("pt", "app_title") => "FREEWOLF K8 - Linux",
+        ("es", "app_title") => "FREEWOLF K8 - Linux",
+        ("fr", "app_title") => "FREEWOLF K8 - Linux",
+        ("de", "app_title") => "FREEWOLF K8 - Linux",
+        (_, "app_title") => "FREEWOLF K8 - Linux",
 
         // Tabs
         ("pt", "tab_light") => "Iluminação",

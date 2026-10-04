@@ -413,10 +413,10 @@ fn setup_help_tags(buf: &TextBuffer) {
     tag_table.add(&tag_tip);
 }
 
-fn render_topic_content(buf: &TextBuffer, topic: &TopicInfo, pic: Option<&Picture>) {
+fn render_topic_content(buf: &TextBuffer, topic: &TopicInfo, overview: Option<&GtkBox>) {
     buf.set_text("");
-    if let Some(p) = pic {
-        p.set_visible(topic.id == 0);
+    if let Some(ov) = overview {
+        ov.set_visible(topic.id == 0);
     }
     let mut it = buf.end_iter();
     for block in topic.blocks {
@@ -737,6 +737,12 @@ fn build_ui(app: &adw::Application) {
          .help-scroll-container {
              background-color: #0e1019;
              border: 1px solid #1a1e30;
+         }
+         .help-kb-title {
+             font-size: 13px;
+             font-weight: bold;
+             color: #ffffff;
+             padding: 2px 0;
          }
          scale highlight {
              background-color: #027ad7;
@@ -2374,9 +2380,24 @@ fn build_ui(app: &adw::Application) {
         None
     };
 
+    let overview_box = GtkBox::new(Orientation::Vertical, 4);
+    overview_box.set_halign(Align::Center);
+    overview_box.set_margin_top(4);
+    overview_box.set_margin_bottom(6);
+
+    let lbl_kb_header = Label::new(Some("FreeWolf K8"));
+    lbl_kb_header.add_css_class("help-kb-title");
+    lbl_kb_header.set_halign(Align::Center);
+    lbl_kb_header.set_justify(gtk4::Justification::Center);
+    overview_box.append(&lbl_kb_header);
+
+    if let Some(ref pic) = pic_overview {
+        overview_box.append(pic);
+    }
+
     if let Some(top0) = initial_topics.first() {
         right_title.set_text(&format!("{}  {}", top0.icon, top0.title));
-        render_topic_content(&help_text_view.buffer(), top0, pic_overview.as_ref());
+        render_topic_content(&help_text_view.buffer(), top0, Some(&overview_box));
     }
 
     for (idx, top) in initial_topics.iter().enumerate() {
@@ -2400,7 +2421,7 @@ fn build_ui(app: &adw::Application) {
         let state_top = state.clone();
         let rt_ref = right_title.clone();
         let htv_ref = help_text_view.clone();
-        let pic_ref = pic_overview.clone();
+        let ov_ref = overview_box.clone();
         let tb_click = topic_buttons.clone();
         btn.connect_clicked(move |_| {
             let mut st = state_top.borrow_mut();
@@ -2408,7 +2429,7 @@ fn build_ui(app: &adw::Application) {
             let current_topics = get_topics(&st.settings.language);
             if let Some(t) = current_topics.get(idx) {
                 rt_ref.set_text(&format!("{}  {}", t.icon, t.title));
-                render_topic_content(&htv_ref.buffer(), t, pic_ref.as_ref());
+                render_topic_content(&htv_ref.buffer(), t, Some(&ov_ref));
             }
             for (i, b) in tb_click.iter().enumerate() {
                 if i == idx {
@@ -2463,9 +2484,7 @@ fn build_ui(app: &adw::Application) {
 
     let help_inner_vbox = GtkBox::new(Orientation::Vertical, 6);
     help_inner_vbox.set_vexpand(true);
-    if let Some(ref pic) = pic_overview {
-        help_inner_vbox.append(pic);
-    }
+    help_inner_vbox.append(&overview_box);
     help_inner_vbox.append(&help_text_view);
     help_content_scroll.set_child(Some(&help_inner_vbox));
     card_help_right.append(&help_content_scroll);
@@ -2474,7 +2493,7 @@ fn build_ui(app: &adw::Application) {
     let state_prev = state.clone();
     let rt_prev = right_title.clone();
     let htv_prev = help_text_view.clone();
-    let pic_prev = pic_overview.clone();
+    let ov_prev = overview_box.clone();
     let tb_prev = topic_buttons.clone();
     btn_prev_topic.connect_clicked(move |_| {
         let mut st = state_prev.borrow_mut();
@@ -2484,7 +2503,7 @@ fn build_ui(app: &adw::Application) {
             let topics = get_topics(&st.settings.language);
             if let Some(t) = topics.get(cur_idx) {
                 rt_prev.set_text(&format!("{}  {}", t.icon, t.title));
-                render_topic_content(&htv_prev.buffer(), t, pic_prev.as_ref());
+                render_topic_content(&htv_prev.buffer(), t, Some(&ov_prev));
             }
             for (i, b) in tb_prev.iter().enumerate() {
                 if i == cur_idx {
@@ -2499,7 +2518,7 @@ fn build_ui(app: &adw::Application) {
     let state_next = state.clone();
     let rt_next = right_title.clone();
     let htv_next = help_text_view.clone();
-    let pic_next = pic_overview.clone();
+    let ov_next = overview_box.clone();
     let tb_next = topic_buttons.clone();
     btn_next_topic.connect_clicked(move |_| {
         let mut st = state_next.borrow_mut();
@@ -2509,7 +2528,7 @@ fn build_ui(app: &adw::Application) {
             let cur_idx = st.current_help_topic;
             if let Some(t) = topics.get(cur_idx) {
                 rt_next.set_text(&format!("{}  {}", t.icon, t.title));
-                render_topic_content(&htv_next.buffer(), t, pic_next.as_ref());
+                render_topic_content(&htv_next.buffer(), t, Some(&ov_next));
             }
             for (i, b) in tb_next.iter().enumerate() {
                 if i == cur_idx {
@@ -2646,7 +2665,7 @@ fn build_ui(app: &adw::Application) {
     let btn_nt_lang = btn_next_topic.clone();
     let rbs_lang = radio_buttons.clone();
     let tb_lang = topic_buttons.clone();
-    let pic_lang = pic_overview.clone();
+    let ov_lang = overview_box.clone();
 
     combo_lang.connect_selected_notify(move |dd| {
         let idx = dd.selected() as usize;
@@ -2733,7 +2752,7 @@ fn build_ui(app: &adw::Application) {
             }
             if let Some(t) = topics.get(cur_help) {
                 rt_lang.set_text(&format!("{}  {}", t.icon, t.title));
-                render_topic_content(&htv_lang.buffer(), t, pic_lang.as_ref());
+                render_topic_content(&htv_lang.buffer(), t, Some(&ov_lang));
             }
         }
     });
