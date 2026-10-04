@@ -327,8 +327,8 @@ fn setup_help_tags(buf: &TextBuffer) {
     tag_h2.set_property("foreground", "#027ad7");
     tag_h2.set_property("weight", 700i32);
     tag_h2.set_property("size-points", 11.0f64);
-    tag_h2.set_property("pixels-above-lines", 14i32);
-    tag_h2.set_property("pixels-below-lines", 6i32);
+    tag_h2.set_property("pixels-above-lines", 18i32);
+    tag_h2.set_property("pixels-below-lines", 10i32);
     tag_h2.set_property("left-margin", 16i32);
     tag_h2.set_property("right-margin", 16i32);
     tag_table.add(&tag_h2);
@@ -336,8 +336,9 @@ fn setup_help_tags(buf: &TextBuffer) {
     let tag_body = TextTag::new(Some("body"));
     tag_body.set_property("foreground", "#d8dee9");
     tag_body.set_property("size-points", 9.5f64);
-    tag_body.set_property("pixels-above-lines", 3i32);
-    tag_body.set_property("pixels-below-lines", 5i32);
+    tag_body.set_property("pixels-above-lines", 6i32);
+    tag_body.set_property("pixels-below-lines", 10i32);
+    tag_body.set_property("pixels-inside-wrap", 5i32);
     tag_body.set_property("left-margin", 16i32);
     tag_body.set_property("right-margin", 16i32);
     tag_table.add(&tag_body);
@@ -351,10 +352,10 @@ fn setup_help_tags(buf: &TextBuffer) {
     let tag_bullet = TextTag::new(Some("bullet"));
     tag_bullet.set_property("foreground", "#d8dee9");
     tag_bullet.set_property("size-points", 9.5f64);
-    tag_bullet.set_property("pixels-above-lines", 2i32);
-    tag_bullet.set_property("pixels-below-lines", 4i32);
-    tag_bullet.set_property("left-margin", 32i32);
-    tag_bullet.set_property("indent", -16i32);
+    tag_bullet.set_property("pixels-above-lines", 5i32);
+    tag_bullet.set_property("pixels-below-lines", 6i32);
+    tag_bullet.set_property("pixels-inside-wrap", 4i32);
+    tag_bullet.set_property("left-margin", 16i32);
     tag_bullet.set_property("right-margin", 16i32);
     tag_table.add(&tag_bullet);
 
@@ -368,10 +369,10 @@ fn setup_help_tags(buf: &TextBuffer) {
     let tag_key_row = TextTag::new(Some("key_row"));
     tag_key_row.set_property("foreground", "#d8dee9");
     tag_key_row.set_property("size-points", 9.5f64);
-    tag_key_row.set_property("pixels-above-lines", 4i32);
-    tag_key_row.set_property("pixels-below-lines", 4i32);
-    tag_key_row.set_property("left-margin", 155i32);
-    tag_key_row.set_property("indent", -139i32);
+    tag_key_row.set_property("pixels-above-lines", 8i32);
+    tag_key_row.set_property("pixels-below-lines", 8i32);
+    tag_key_row.set_property("pixels-inside-wrap", 4i32);
+    tag_key_row.set_property("left-margin", 16i32);
     tag_key_row.set_property("right-margin", 16i32);
     tag_table.add(&tag_key_row);
 
@@ -384,10 +385,10 @@ fn setup_help_tags(buf: &TextBuffer) {
     let tag_table_row = TextTag::new(Some("table_row"));
     tag_table_row.set_property("foreground", "#d8dee9");
     tag_table_row.set_property("size-points", 9.5f64);
-    tag_table_row.set_property("pixels-above-lines", 3i32);
-    tag_table_row.set_property("pixels-below-lines", 3i32);
-    tag_table_row.set_property("left-margin", 155i32);
-    tag_table_row.set_property("indent", -139i32);
+    tag_table_row.set_property("pixels-above-lines", 8i32);
+    tag_table_row.set_property("pixels-below-lines", 8i32);
+    tag_table_row.set_property("pixels-inside-wrap", 4i32);
+    tag_table_row.set_property("left-margin", 16i32);
     tag_table_row.set_property("right-margin", 16i32);
     tag_table.add(&tag_table_row);
 
@@ -395,8 +396,9 @@ fn setup_help_tags(buf: &TextBuffer) {
     tag_code.set_property("font", "monospace 9.5");
     tag_code.set_property("foreground", "#61afef");
     tag_code.set_property("background", "#161924");
-    tag_code.set_property("pixels-above-lines", 4i32);
-    tag_code.set_property("pixels-below-lines", 4i32);
+    tag_code.set_property("pixels-above-lines", 6i32);
+    tag_code.set_property("pixels-below-lines", 6i32);
+    tag_code.set_property("pixels-inside-wrap", 4i32);
     tag_code.set_property("left-margin", 24i32);
     tag_code.set_property("right-margin", 24i32);
     tag_table.add(&tag_code);
@@ -406,8 +408,9 @@ fn setup_help_tags(buf: &TextBuffer) {
     tag_tip.set_property("background", "#222638");
     tag_tip.set_property("style", gtk4::pango::Style::Italic);
     tag_tip.set_property("size-points", 9.5f64);
-    tag_tip.set_property("pixels-above-lines", 6i32);
-    tag_tip.set_property("pixels-below-lines", 6i32);
+    tag_tip.set_property("pixels-above-lines", 8i32);
+    tag_tip.set_property("pixels-below-lines", 8i32);
+    tag_tip.set_property("pixels-inside-wrap", 4i32);
     tag_tip.set_property("left-margin", 20i32);
     tag_tip.set_property("right-margin", 20i32);
     tag_table.add(&tag_tip);
@@ -739,10 +742,12 @@ fn build_ui(app: &adw::Application) {
              border: 1px solid #1a1e30;
          }
          .help-kb-title {
-             font-size: 17px;
-             font-weight: bold;
+             font-size: 24px;
+             font-weight: 800;
              color: #ffffff;
-             padding: 4px 0;
+             margin-top: 14px;
+             margin-bottom: 2px;
+             padding: 0;
          }
          scale highlight {
              background-color: #027ad7;
@@ -773,6 +778,18 @@ fn build_ui(app: &adw::Application) {
 
     let initial_macro_mgr = MacroManager::load();
     let initial_macro_id = initial_macro_mgr.macros.first().map(|m| m.id);
+
+    let initial_probe = FreeWolfK8Driver::probe();
+    if let Some(ref node) = initial_probe.node {
+        if !initial_mode.is_music() {
+            let _ = FreeWolfK8Driver::set_lighting(
+                node,
+                initial_mode,
+                initial_settings.brightness,
+                initial_settings.speed,
+            );
+        }
+    }
 
     let state = Rc::new(RefCell::new(AppState {
         settings: initial_settings,
@@ -909,8 +926,43 @@ fn build_ui(app: &adw::Application) {
     dev_box.set_margin_end(12);
     dev_box.set_margin_bottom(8);
 
-    let lbl_dev_badge = Label::new(Some(t(&cur_lang, "dev_badge_connected")));
-    lbl_dev_badge.add_css_class("badge-connected");
+    let (init_st_txt, init_badge_txt, init_badge_cls, init_node_txt, init_dot_cls, init_fix_vis) = match initial_probe.state {
+        DeviceState::Connected => (
+            "Connected",
+            "FREE WOLF K8 USB",
+            "badge-connected",
+            format!("Ready on {}", initial_probe.node.as_deref().unwrap_or("/dev/hidraw1")),
+            "status-circle-ok",
+            false,
+        ),
+        DeviceState::PermissionDenied => (
+            "Access Denied",
+            "FREE WOLF K8 (Access Denied)",
+            "badge-warning",
+            "Write permission required".to_string(),
+            "status-circle-warn",
+            true,
+        ),
+        DeviceState::ClaimedByVm => (
+            "Claimed by VM",
+            "FREE WOLF K8 (QEMU VM)",
+            "badge-warning",
+            "USB claimed by guest OS".to_string(),
+            "status-circle-warn",
+            false,
+        ),
+        DeviceState::NotFound => (
+            "Device disconnected",
+            "NO DEVICE DETECTED",
+            "badge-disconnected",
+            "Please connect keyboard".to_string(),
+            "status-circle-err",
+            false,
+        ),
+    };
+
+    let lbl_dev_badge = Label::new(Some(init_badge_txt));
+    lbl_dev_badge.add_css_class(init_badge_cls);
     lbl_dev_badge.set_justify(gtk4::Justification::Center);
     dev_box.append(&lbl_dev_badge);
 
@@ -1004,17 +1056,17 @@ fn build_ui(app: &adw::Application) {
 
     let status_hdr = GtkBox::new(Orientation::Horizontal, 6);
     let status_circle = GtkBox::new(Orientation::Horizontal, 0);
-    status_circle.add_css_class("status-circle-ok");
+    status_circle.add_css_class(init_dot_cls);
     status_circle.set_valign(Align::Center);
     status_hdr.append(&status_circle);
 
-    let lbl_status = Label::new(Some("Connected"));
+    let lbl_status = Label::new(Some(init_st_txt));
     lbl_status.add_css_class("field-title");
     lbl_status.set_halign(Align::Start);
     status_hdr.append(&lbl_status);
     status_box.append(&status_hdr);
 
-    let lbl_status_node = Label::new(Some("Ready on /dev/hidraw1"));
+    let lbl_status_node = Label::new(Some(&init_node_txt));
     lbl_status_node.add_css_class("muted-text");
     lbl_status_node.set_halign(Align::Start);
     lbl_status_node.set_margin_start(16);
@@ -1022,7 +1074,7 @@ fn build_ui(app: &adw::Application) {
 
     let btn_fix_udev = Button::with_label(t(&cur_lang, "btn_fix_udev"));
     btn_fix_udev.add_css_class("accent-btn");
-    btn_fix_udev.set_visible(false);
+    btn_fix_udev.set_visible(init_fix_vis);
     btn_fix_udev.set_margin_top(4);
     status_box.append(&btn_fix_udev);
     card_light_info.append(&status_box);
@@ -1219,11 +1271,40 @@ fn build_ui(app: &adw::Application) {
     row_m2.set_halign(Align::Center);
     let lbl_freq = Label::new(Some(t(&cur_lang, "music_freq")));
     lbl_freq.add_css_class("field-title");
+    let init_delay = state.borrow().settings.music_delay;
+    let freq_idx = match init_delay {
+        33 => 0,
+        66 => 1,
+        100 => 2,
+        _ => 1,
+    };
     let combo_freq = DropDown::from_strings(&["33ms (30Hz)", "66ms (15Hz)", "100ms (10Hz)"]);
-    combo_freq.set_selected(1);
+    combo_freq.set_selected(freq_idx);
     row_m2.append(&lbl_freq);
     row_m2.append(&combo_freq);
     music_box.append(&row_m2);
+
+    let state_cp = state.clone();
+    combo_pattern.connect_selected_notify(move |dd| {
+        let submode = (dd.selected() + 1) as u8;
+        if let Ok(mut st) = state_cp.try_borrow_mut() {
+            st.settings.music_submode = submode;
+            ConfigManager::save(&st.settings);
+        }
+    });
+
+    let state_cf = state.clone();
+    combo_freq.connect_selected_notify(move |dd| {
+        let delay = match dd.selected() {
+            0 => 33,
+            1 => 66,
+            _ => 100,
+        };
+        if let Ok(mut st) = state_cf.try_borrow_mut() {
+            st.settings.music_delay = delay;
+            ConfigManager::save(&st.settings);
+        }
+    });
 
     let row_m3 = GtkBox::new(Orientation::Horizontal, 12);
     row_m3.set_halign(Align::Center);
@@ -1559,6 +1640,11 @@ fn build_ui(app: &adw::Application) {
             *is_programmatic.borrow_mut() = false;
             populate_action_table(&action_listbox, &m.actions, &cur_lang);
         }
+    } else {
+        btn_macro_del.set_sensitive(false);
+        btn_macro_copy.set_sensitive(false);
+        btn_macro_rename.set_sensitive(false);
+        btn_macro_export.set_sensitive(false);
     }
 
     // Macro list selection handler
@@ -1731,6 +1817,10 @@ fn build_ui(app: &adw::Application) {
     let entry_def_new = entry_default_delay.clone();
     let rb_dd_new = rb_delay_default.clone();
     let is_prog_new = is_programmatic.clone();
+    let btn_del_new = btn_macro_del.clone();
+    let btn_cp_new = btn_macro_copy.clone();
+    let btn_ren_new = btn_macro_rename.clone();
+    let btn_exp_new = btn_macro_export.clone();
     btn_macro_new.connect_clicked(move |_| {
         let (mid, macros, lang) = {
             let mut st = state_mnew.borrow_mut();
@@ -1747,6 +1837,11 @@ fn build_ui(app: &adw::Application) {
         rb_dd_new.set_active(true);
         *is_prog_new.borrow_mut() = false;
 
+        btn_del_new.set_sensitive(true);
+        btn_cp_new.set_sensitive(true);
+        btn_ren_new.set_sensitive(true);
+        btn_exp_new.set_sensitive(true);
+
         populate_macro_list(&m_lb_new, &macros, Some(mid));
         populate_action_table(&act_lb_new, &[], &lang);
     });
@@ -1762,6 +1857,10 @@ fn build_ui(app: &adw::Application) {
     let rb_dn_del = rb_delay_none.clone();
     let rb_dd_del = rb_delay_default.clone();
     let is_prog_del = is_programmatic.clone();
+    let btn_del_inner = btn_macro_del.clone();
+    let btn_cp_inner = btn_macro_copy.clone();
+    let btn_ren_inner = btn_macro_rename.clone();
+    let btn_exp_inner = btn_macro_export.clone();
     btn_macro_del.connect_clicked(move |_| {
         let (cur_id, mname) = {
             let st = state_mdel.borrow();
@@ -1783,6 +1882,10 @@ fn build_ui(app: &adw::Application) {
         let rb_dr_in = rb_dr_del.clone();
         let rb_dn_in = rb_dn_del.clone();
         let rb_dd_in = rb_dd_del.clone();
+        let bdel_in = btn_del_inner.clone();
+        let bcp_in = btn_cp_inner.clone();
+        let bren_in = btn_ren_inner.clone();
+        let bexp_in = btn_exp_inner.clone();
         show_confirm_dialog(
             &win_del,
             "Delete Macro",
@@ -1812,6 +1915,16 @@ fn build_ui(app: &adw::Application) {
                         _ => rb_dd_in.set_active(true),
                     }
                     *is_prog_inner.borrow_mut() = false;
+                } else {
+                    *is_prog_inner.borrow_mut() = true;
+                    erep_inner.set_text("1");
+                    edef_inner.set_text("10");
+                    rb_dd_in.set_active(true);
+                    *is_prog_inner.borrow_mut() = false;
+                    bdel_in.set_sensitive(false);
+                    bcp_in.set_sensitive(false);
+                    bren_in.set_sensitive(false);
+                    bexp_in.set_sensitive(false);
                 }
                 populate_macro_list(&mlb_inner, &macros, new_sel);
                 populate_action_table(&alb_inner, &actions, &lang_inner);
@@ -2035,6 +2148,7 @@ fn build_ui(app: &adw::Application) {
             if let Some(cur_id) = st.current_macro_id {
                 if let Some(m) = st.macro_mgr.get_macro_mut(cur_id) {
                     m.repeat_time = rep.max(1);
+                    st.macro_mgr.save();
                 }
             }
         }
@@ -2059,6 +2173,7 @@ fn build_ui(app: &adw::Application) {
                                 a.delay_ms = def_d;
                             }
                         }
+                        st.macro_mgr.save();
                     }
                     if is_default_mode {
                         (true, st.macro_mgr.get_macro(cur_id).unwrap().actions.clone(), st.settings.language.clone())
@@ -2108,6 +2223,7 @@ fn build_ui(app: &adw::Application) {
                             a.delay_ms = def_d;
                         }
                     }
+                    st.macro_mgr.save();
                 }
                 if mode != DELAY_RECORD {
                     (true, st.macro_mgr.get_macro(cur_id).unwrap().actions.clone(), st.settings.language.clone())
@@ -2148,6 +2264,7 @@ fn build_ui(app: &adw::Application) {
             btn_rec_ref.set_label(t(&cur_lang_rec, "btn_record"));
             btn_rec_ref.remove_css_class("destructive-btn");
             btn_rec_ref.add_css_class("secondary-btn");
+            st.macro_mgr.save();
             let count = st.current_macro_id
                 .and_then(|id| st.macro_mgr.get_macro(id))
                 .map(|m| m.actions.len())
@@ -2361,10 +2478,11 @@ fn build_ui(app: &adw::Application) {
     help_text_view.set_top_margin(12);
     help_text_view.set_bottom_margin(12);
     help_text_view.set_vexpand(true);
+    help_text_view.set_hexpand(true);
     help_text_view.add_css_class("help-textview");
 
     let mut tabs = gtk4::pango::TabArray::new(1, true);
-    tabs.set_tab(0, gtk4::pango::TabAlign::Left, 155);
+    tabs.set_tab(0, gtk4::pango::TabAlign::Left, 135);
     help_text_view.set_tabs(&tabs);
     setup_help_tags(&help_text_view.buffer());
 
@@ -2380,7 +2498,7 @@ fn build_ui(app: &adw::Application) {
         None
     };
 
-    let overview_box = GtkBox::new(Orientation::Vertical, 4);
+    let overview_box = GtkBox::new(Orientation::Vertical, 0);
     overview_box.set_halign(Align::Center);
     overview_box.set_margin_top(4);
     overview_box.set_margin_bottom(6);
@@ -2484,6 +2602,7 @@ fn build_ui(app: &adw::Application) {
 
     let help_inner_vbox = GtkBox::new(Orientation::Vertical, 6);
     help_inner_vbox.set_vexpand(true);
+    help_inner_vbox.set_hexpand(true);
     help_inner_vbox.append(&overview_box);
     help_inner_vbox.append(&help_text_view);
     help_content_scroll.set_child(Some(&help_inner_vbox));
@@ -2757,9 +2876,14 @@ fn build_ui(app: &adw::Application) {
         }
     });
     // Auto Run Toggle
+    let state_ar = state.clone();
     cb_autorun.connect_toggled(move |btn| {
         let val = btn.is_active();
         ConfigManager::set_autostart(val, None);
+        if let Ok(mut st) = state_ar.try_borrow_mut() {
+            st.settings.auto_run = val;
+            ConfigManager::save(&st.settings);
+        }
     });
 
     // Reset Factory Settings Callback
@@ -2772,6 +2896,15 @@ fn build_ui(app: &adw::Application) {
     let is_prog_res = is_programmatic.clone();
     let mlb_res = macro_listbox.clone();
     let alb_res = action_listbox.clone();
+    let erep_res = entry_repeat.clone();
+    let edef_res = entry_default_delay.clone();
+    let rb_dd_res = rb_delay_default.clone();
+    let bdel_res = btn_macro_del.clone();
+    let bcp_res = btn_macro_copy.clone();
+    let bren_res = btn_macro_rename.clone();
+    let bexp_res = btn_macro_export.clone();
+    let cp_res = combo_pattern.clone();
+    let cf_res = combo_freq.clone();
 
     btn_restore.connect_clicked(move |_| {
         let parent = win_res.clone();
@@ -2783,6 +2916,15 @@ fn build_ui(app: &adw::Application) {
         let is_prog = is_prog_res.clone();
         let mlb_ref = mlb_res.clone();
         let alb_ref = alb_res.clone();
+        let erep_in = erep_res.clone();
+        let edef_in = edef_res.clone();
+        let rb_dd_in = rb_dd_res.clone();
+        let bdel_in = bdel_res.clone();
+        let bcp_in = bcp_res.clone();
+        let bren_in = bren_res.clone();
+        let bexp_in = bexp_res.clone();
+        let cp_in = cp_res.clone();
+        let cf_in = cf_res.clone();
 
         let cur_lang = st_ref.borrow().settings.language.clone();
         let title = t(&cur_lang, "msg_factory_reset_title");
@@ -2800,6 +2942,8 @@ fn build_ui(app: &adw::Application) {
                     st.settings.speed = 4;
                     st.settings.mode_id = 1;
                     st.settings.auto_run = false;
+                    st.settings.music_submode = 2;
+                    st.settings.music_delay = 66;
                     ConfigManager::save(&st.settings);
                     st.current_mode = &LIGHT_MODES[1];
                     st.macro_mgr.macros.clear();
@@ -2811,11 +2955,21 @@ fn build_ui(app: &adw::Application) {
                 *is_prog.borrow_mut() = true;
                 populate_macro_list(&mlb_ref, &macros, None);
                 populate_action_table(&alb_ref, &[], &lang);
+                erep_in.set_text("1");
+                edef_in.set_text("10");
+                rb_dd_in.set_active(true);
                 *is_prog.borrow_mut() = false;
+
+                bdel_in.set_sensitive(false);
+                bcp_in.set_sensitive(false);
+                bren_in.set_sensitive(false);
+                bexp_in.set_sensitive(false);
 
                 cb_ar_ref.set_active(false);
                 ConfigManager::set_autostart(false, None);
 
+                cp_in.set_selected(1);
+                cf_in.set_selected(1);
                 sc_b_ref.set_value(4.0);
                 sc_s_ref.set_value(4.0);
                 rb_first_ref.set_active(true);
@@ -2900,19 +3054,37 @@ fn build_ui(app: &adw::Application) {
     let dot_timer = status_circle.clone();
     let btn_fix_timer = btn_fix_udev.clone();
     let lbl_st_timer = lbl_status.clone();
+    let state_timer = state.clone();
+    let mut was_connected = initial_probe.state == DeviceState::Connected;
 
     glib::timeout_add_local(Duration::from_millis(2000), move || {
         let probe = FreeWolfK8Driver::probe();
         match probe.state {
             DeviceState::Connected => {
+                let node_str = probe.node.clone().unwrap_or_default();
                 lbl_st_timer.set_text("Connected");
                 lbl_badge_timer.set_text("FREE WOLF K8 USB");
                 lbl_badge_timer.set_css_classes(&["badge-connected"]);
-                lbl_node_timer.set_text(&format!("Ready on {}", probe.node.unwrap_or_default()));
+                lbl_node_timer.set_text(&format!("Ready on {}", node_str));
                 dot_timer.set_css_classes(&["status-circle-ok"]);
                 btn_fix_timer.set_visible(false);
+
+                if !was_connected {
+                    if let Ok(st) = state_timer.try_borrow() {
+                        if !st.current_mode.is_music() && !node_str.is_empty() {
+                            let _ = FreeWolfK8Driver::set_lighting(
+                                &node_str,
+                                st.current_mode,
+                                st.settings.brightness,
+                                st.settings.speed,
+                            );
+                        }
+                    }
+                    was_connected = true;
+                }
             }
             DeviceState::PermissionDenied => {
+                was_connected = false;
                 lbl_st_timer.set_text("Access Denied");
                 lbl_badge_timer.set_text("FREE WOLF K8 (Access Denied)");
                 lbl_badge_timer.set_css_classes(&["badge-warning"]);
@@ -2921,6 +3093,7 @@ fn build_ui(app: &adw::Application) {
                 btn_fix_timer.set_visible(true);
             }
             DeviceState::ClaimedByVm => {
+                was_connected = false;
                 lbl_st_timer.set_text("Claimed by VM");
                 lbl_badge_timer.set_text("FREE WOLF K8 (QEMU VM)");
                 lbl_badge_timer.set_css_classes(&["badge-warning"]);
@@ -2929,6 +3102,7 @@ fn build_ui(app: &adw::Application) {
                 btn_fix_timer.set_visible(false);
             }
             DeviceState::NotFound => {
+                was_connected = false;
                 lbl_st_timer.set_text("Device disconnected");
                 lbl_badge_timer.set_text("NO DEVICE DETECTED");
                 lbl_badge_timer.set_css_classes(&["badge-disconnected"]);

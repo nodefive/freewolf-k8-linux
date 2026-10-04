@@ -2,4 +2,7 @@
 freewolf-k8
 k8ctl
 k8gui
+*.zip
+*.tar.gz
+
 

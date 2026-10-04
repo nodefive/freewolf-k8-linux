@@ -45,9 +45,7 @@ impl MacroManager {
         if path.exists() {
             if let Ok(content) = fs::read_to_string(&path) {
                 if let Ok(macros) = serde_json::from_str::<Vec<Macro>>(&content) {
-                    if !macros.is_empty() {
-                        return Self { macros };
-                    }
+                    return Self { macros };
                 }
             }
         }
@@ -402,5 +400,45 @@ impl Drop for UinputPlayer {
             libc::ioctl(self.fd, UI_DEV_DESTROY);
             libc::close(self.fd);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_empty_macro_list_deserialization() {
+        let empty_json = "[]";
+        let res: Result<Vec<Macro>, _> = serde_json::from_str(empty_json);
+        assert!(res.is_ok());
+        let macros = res.unwrap();
+        assert!(macros.is_empty());
+    }
+
+    #[test]
+    fn test_macro_serialization_and_deserialization() {
+        let m = Macro {
+            id: 42,
+            name: "Test Macro".to_string(),
+            repeat_time: 5,
+            delay_type: DELAY_NONE,
+            default_delay: 25,
+            actions: vec![MacroAction {
+                desc: "Key A".to_string(),
+                action: "Down".to_string(),
+                delay_ms: 0,
+                keycode: 30,
+            }],
+        };
+        let json = serde_json::to_string(&vec![m.clone()]).unwrap();
+        let loaded: Vec<Macro> = serde_json::from_str(&json).unwrap();
+        assert_eq!(loaded.len(), 1);
+        assert_eq!(loaded[0].id, 42);
+        assert_eq!(loaded[0].name, "Test Macro");
+        assert_eq!(loaded[0].repeat_time, 5);
+        assert_eq!(loaded[0].delay_type, DELAY_NONE);
+        assert_eq!(loaded[0].default_delay, 25);
+        assert_eq!(loaded[0].actions.len(), 1);
     }
 }
