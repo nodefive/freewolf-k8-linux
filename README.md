@@ -102,20 +102,28 @@ target/release/freewolf-k8
 
 ---
 
-### 4. Create Convenience Symlinks (Optional)
+### 4. System-Wide Installation Script (Automated)
 
-You can create direct launcher symlinks in your project root or `~/.local/bin`:
+The included `install.sh` script automates system-wide installation across GNOME, KDE Plasma, XFCE, and other desktop environments:
+
+```bash
+# Install binary to /usr/bin, desktop entry, application icons, assets, and udev rules
+sudo ./install.sh -i
+
+# To cleanly remove all installed files:
+sudo ./install.sh -u
+
+# Show help:
+./install.sh -h
+```
+
+### 5. Manual Symlinks (Portable Run)
+
+If you prefer running portably directly from the build directory without system-wide installation:
 
 ```bash
 ln -sf target/release/freewolf-k8 k8gui
 ln -sf target/release/freewolf-k8 k8ctl
-```
-
-To install system-wide:
-```bash
-sudo install -m 755 target/release/freewolf-k8 /usr/local/bin/freewolf-k8
-sudo ln -sf /usr/local/bin/freewolf-k8 /usr/local/bin/k8gui
-sudo ln -sf /usr/local/bin/freewolf-k8 /usr/local/bin/k8ctl
 ```
 
 ---
@@ -241,14 +249,56 @@ Control your keyboard directly from terminal scripts, hotkeys, or cron jobs:
 
 ---
 
+## Legacy Python System (FreeWolf-K8-Legacy)
+
+For environments where Python is preferred or as a reference implementation, the original Python 3 / Tkinter application is available in the [`FreeWolf-K8-Legacy/`](FreeWolf-K8-Legacy/) directory.
+
+### Requirements to Run the Python Edition
+
+- **Python 3.10+**
+- **Tkinter bindings**:
+  - **Ubuntu / Debian / Linux Mint**: `sudo apt install -y python3-tk`
+  - **Fedora / RHEL**: `sudo dnf install -y python3-tkinter`
+  - **Arch Linux / Manjaro**: `sudo pacman -S --needed tk`
+  - **openSUSE**: `sudo zypper install -y python3-tk`
+- *No additional pip packages required (runs purely on standard library).*
+
+### How to Run the Python Edition
+
+```bash
+cd FreeWolf-K8-Legacy
+
+# Configure udev permissions
+./setup_udev.sh
+
+# Launch the Tkinter desktop GUI
+./k8gui
+
+# Or run terminal CLI commands
+./k8ctl status
+./k8ctl set steady --brightness 4
+./k8ctl music --submode 2 --delay 66
+```
+
+For complete details, see [`FreeWolf-K8-Legacy/README.md`](FreeWolf-K8-Legacy/README.md).
+
+---
+
 ## Project Architecture
 
 ```
 freewolf-k8-linux/
 ├── assets/
+│   ├── DeviceDriver.png      # 500x500 high-res application icon
 │   ├── icon/                 # Application navigation tab icons
 │   ├── keyboard/             # High-res keyboard diagram (kb_102.png)
 │   └── screenshots/          # Documentation screenshots (Screen1, Screen2)
+├── FreeWolf-K8-Legacy/       # Original Python 3 / Tkinter implementation
+│   ├── assets/               # Legacy icon and UI assets
+│   ├── freewolf_k8/          # Python driver, GUI, CLI, and macro modules
+│   ├── k8ctl                 # CLI launcher script
+│   ├── k8gui                 # GUI launcher script
+│   └── README.md             # Python edition documentation
 ├── src/
 │   ├── cli.rs                # Command-line interface handler & dispatcher
 │   ├── config.rs             # Configuration persistence (~/.config/freewolf-k8)
@@ -262,6 +312,7 @@ freewolf-k8-linux/
 │   ├── protocol.rs           # Lighting modes, USB IDs, and packet generators
 │   └── udev.rs               # Permission probing, udev rules & elevation helpers
 ├── 99-freewolf-k8.rules      # Linux udev rules for hidraw & uinput
+├── install.sh                # System-wide installer / uninstaller script (-i / -u)
 ├── setup_udev.sh             # Standalone bash setup script
 ├── Cargo.toml                # Rust package definition & dependencies
 ├── Cargo.lock                # Dependency lockfile
