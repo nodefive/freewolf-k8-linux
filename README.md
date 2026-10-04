@@ -11,7 +11,7 @@ Engineered entirely in **Rust** using **GTK4** and **Libadwaita** with a custom 
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
 | Lighting & Device Settings | Macro Recording Studio |
 | :---: | :---: |
@@ -19,7 +19,7 @@ Engineered entirely in **Rust** using **GTK4** and **Libadwaita** with a custom 
 
 ---
 
-## ⚡ Highlights
+## Highlights
 
 - **Single Unified Binary**: The compiled binary (`freewolf-k8`) seamlessly acts as a graphical interface or terminal CLI based on launch arguments or symlink name (`k8gui` vs `k8ctl`).
 - **No Python or Heavy Runtimes**: Zero Python, Node, or Electron dependencies. Clean, compiled native Linux ELF binary with near-instant launch times and minimal RAM usage (~25 MB).
@@ -33,7 +33,7 @@ Engineered entirely in **Rust** using **GTK4** and **Libadwaita** with a custom 
 
 ---
 
-## 🛠️ Compilation & Installation
+## Compilation & Installation
 
 ### 1. Install System Dependencies
 
@@ -120,7 +120,7 @@ sudo ln -sf /usr/local/bin/freewolf-k8 /usr/local/bin/k8ctl
 
 ---
 
-## 🔒 Device Permissions & udev Configuration
+## Device Permissions & udev Configuration
 
 By default, Linux restricts write access to `/dev/hidraw*` device nodes and `/dev/uinput` to the `root` user. To allow your user account to control backlights and playback macros without `sudo`:
 
@@ -143,7 +143,7 @@ sudo usermod -aG input $USER
 
 ---
 
-## 🚀 Usage Guide
+## Usage Guide
 
 ### 1. Graphical User Interface (GUI)
 
@@ -185,7 +185,9 @@ Control your keyboard directly from terminal scripts, hotkeys, or cron jobs:
 ./freewolf-k8 set -m steady -b 4
 ./freewolf-k8 set -m neon_stream -b 3 -s 2
 ./freewolf-k8 set -m 18 -b 4 -s 3
-./freewolf-k8 set 0                     # Turn off backlights (sleep / power saving)
+
+# Turn off backlights (sleep / power saving)
+./freewolf-k8 set 0
 
 # Start real-time audio spectrum lighting visualizer
 ./freewolf-k8 music -m 2 -d 66
@@ -211,7 +213,7 @@ Control your keyboard directly from terminal scripts, hotkeys, or cron jobs:
 
 ---
 
-## 💡 Lighting Modes Reference
+## Lighting Modes Reference
 
 | ID | Wire ID | Mode Name | Description |
 |:---:|:---:|:---|:---|
@@ -239,7 +241,7 @@ Control your keyboard directly from terminal scripts, hotkeys, or cron jobs:
 
 ---
 
-## 📂 Project Architecture
+## Project Architecture
 
 ```
 freewolf-k8-linux/
@@ -268,7 +270,7 @@ freewolf-k8-linux/
 
 ---
 
-## ❓ FAQ & Troubleshooting
+## FAQ & Troubleshooting
 
 ### Keyboard shows "Permission Denied"
 Run `./freewolf-k8 setup-udev` or install `99-freewolf-k8.rules` into `/etc/udev/rules.d/`, reload udev rules, and replug the USB cable.
@@ -281,6 +283,6 @@ The FREEWOLF K8 hardware uses an autonomous onboard analog charging circuit. USB
 
 ---
 
-## 📜 License
+## License
 
 This project is licensed under the **MIT License**. See [LICENSE](LICENSE) for details.
