@@ -5,6 +5,10 @@
 [![Platform](https://img.shields.io/badge/Platform-Linux-green.svg)](https://kernel.org/)
 [![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 
+<p align="center">
+  <img src="assets/keyboard/kb_102.png" alt="FREE WOLF K8 Mechanical Keyboard" width="640">
+</p>
+
 A high-performance, native Linux driver, graphical configuration studio, and CLI utility for the **FREE WOLF K8** Tri-Mode Mechanical Gaming Keyboard (USB Wired / 2.4 GHz Wireless / Bluetooth 5.0).
 
 Engineered entirely in **Rust** using **GTK4** and **Libadwaita** with a custom dark Argonaut GNOME theme. The application compiles to a **single unified native binary** (`freewolf-k8`) that functions as both a modern desktop GUI and a fast, scriptable terminal CLI.
