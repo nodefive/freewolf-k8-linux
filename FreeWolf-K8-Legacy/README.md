@@ -11,7 +11,7 @@ This directory contains the original Python 3 / Tkinter implementation and drive
 
 ---
 
-## 📋 Requirements & Prerequisites
+## Requirements & Prerequisites
 
 The Python implementation relies strictly on Python standard libraries and does not require third-party `pip` packages.
 
@@ -45,7 +45,7 @@ sudo zypper install -y python3 python3-tk
 
 ---
 
-## 🔒 1. Device Permissions (udev)
+## 1. Device Permissions (udev)
 
 Linux restricts write access to raw USB HID nodes (`/dev/hidraw*`, Interface 1) and virtual input devices (`/dev/uinput`).
 
@@ -67,7 +67,7 @@ sudo usermod -aG input $USER
 
 ---
 
-## 🚀 2. Launching the Applications
+## 2. Launching the Applications
 
 Both `k8gui` and `k8ctl` are executable Python launcher scripts in this directory.
 
@@ -123,7 +123,7 @@ Control your keyboard directly from the terminal without launching the GUI:
 
 ---
 
-## 🔌 3. Protocol Specification
+## 3. Protocol Specification
 
 All lighting commands communicate over USB HID Feature Reports on **Interface 1** (Vendor Control Interface) using standard Linux `ioctl(HIDIOCSFEATURE(8))` on `/dev/hidraw*`:
 
@@ -153,7 +153,7 @@ Byte 7:  0x00          (Padding)
 
 ---
 
-## 📂 File Structure
+## File Structure
 
 ```
 FreeWolf-K8-Legacy/
