@@ -739,10 +739,10 @@ fn build_ui(app: &adw::Application) {
              border: 1px solid #1a1e30;
          }
          .help-kb-title {
-             font-size: 13px;
+             font-size: 17px;
              font-weight: bold;
              color: #ffffff;
-             padding: 2px 0;
+             padding: 4px 0;
          }
          scale highlight {
              background-color: #027ad7;
