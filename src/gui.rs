@@ -50,17 +50,31 @@ fn get_asset_path(rel: &str) -> Option<PathBuf> {
     if p.exists() {
         return Some(p.to_path_buf());
     }
-    let abs = Path::new("/home/unl0cker/Desktop/FreeWolf-K8-Rust").join(rel);
-    if abs.exists() {
-        return Some(abs);
-    }
     if let Ok(exe) = std::env::current_exe() {
         if let Some(parent) = exe.parent() {
             let exe_cand = parent.join(rel);
             if exe_cand.exists() {
                 return Some(exe_cand);
             }
+            if let Some(grandparent) = parent.parent() {
+                let gp_cand = grandparent.join(rel);
+                if gp_cand.exists() {
+                    return Some(gp_cand);
+                }
+            }
         }
+    }
+    let share_cand = Path::new("/usr/share/freewolf-k8").join(rel);
+    if share_cand.exists() {
+        return Some(share_cand);
+    }
+    let local_share_cand = Path::new("/usr/local/share/freewolf-k8").join(rel);
+    if local_share_cand.exists() {
+        return Some(local_share_cand);
+    }
+    let dev_path = Path::new("/home/unl0cker/Desktop/FreeWolf-K8-Rust").join(rel);
+    if dev_path.exists() {
+        return Some(dev_path);
     }
     None
 }
