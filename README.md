@@ -21,9 +21,9 @@ Engineered entirely in **Rust** using **GTK4** and **Libadwaita** with a custom 
 
 ## Screenshots
 
-| Lighting & Device Settings | Macro Recording Studio |
-| :---: | :---: |
-| ![Lighting & Settings](assets/screenshots/Screen1.png) | ![Macro Studio](assets/screenshots/Screen2.png) |
+![Lighting & Device Settings](assets/screenshots/Screen1.png)
+
+![Macro Recording Studio](assets/screenshots/Screen2.png)
 
 ---
 
